@@ -11,6 +11,8 @@ const dataDirectory = path.join(__dirname, 'data');
 const ordersFile = path.join(dataDirectory, 'orders.json');
 const invoicesFile = path.join(dataDirectory, 'invoices.json');
 const settingsFile = path.join(dataDirectory, 'settings.json');
+const usersFile = path.join(dataDirectory, 'users.json');
+const sessionsFile = path.join(dataDirectory, 'sessions.json');
 const app = express();
 const port = Number(process.env.PORT || 4242);
 const publicUrl = process.env.PUBLIC_URL || `http://localhost:${port}`;
@@ -30,6 +32,31 @@ const plans = {
   pro: { name: 'Pro Lyon', amount: 990, description: 'Abonnement mensuel Pro Lyon' },
   business: { name: 'Business & Équipe', amount: 2490, description: 'Abonnement mensuel Business & Équipe' }
 };
+
+const hashPassword = password => new Promise((resolve, reject) => {
+  const salt = crypto.randomBytes(16).toString('hex');
+  crypto.scrypt(password, salt, 64, (error, derivedKey) => {
+    if (error) reject(error);
+    else resolve(`${salt}:${derivedKey.toString('hex')}`);
+  });
+});
+
+const verifyPassword = (password, storedHash) => new Promise((resolve, reject) => {
+  const [salt, key] = storedHash.split(':');
+  crypto.scrypt(password, salt, 64, (error, derivedKey) => {
+    if (error) reject(error);
+    else resolve(crypto.timingSafeEqual(Buffer.from(key, 'hex'), derivedKey));
+  });
+});
+
+function setSessionCookie(res, token) {
+  res.setHeader('Set-Cookie', `izi_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800${process.env.VERCEL ? '; Secure' : ''}`);
+}
+
+function getSessionToken(req) {
+  const cookies = req.get('cookie') || '';
+  return cookies.split(';').map(cookie => cookie.trim().split('=')).find(([name]) => name === 'izi_session')?.[1];
+}
 
 async function readOrders() {
   try {
@@ -168,6 +195,56 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
 
 app.use(express.json());
 app.use(express.static(__dirname));
+
+app.post('/api/auth/register', async (req, res) => {
+  const { name, email, password } = req.body;
+  if (!name || !email || !password || password.length < 8) {
+    return res.status(400).json({ error: 'Nom, email et mot de passe de 8 caractères minimum requis.' });
+  }
+  const users = await readJson(usersFile, []);
+  const normalizedEmail = email.trim().toLowerCase();
+  if (users.some(user => user.email === normalizedEmail)) return res.status(409).json({ error: 'Un compte existe déjà avec cet email.' });
+  const user = { id: crypto.randomUUID(), name: name.trim(), email: normalizedEmail, passwordHash: await hashPassword(password), createdAt: new Date().toISOString() };
+  users.push(user);
+  await writeJson(usersFile, users);
+  const token = crypto.randomBytes(32).toString('hex');
+  const sessions = await readJson(sessionsFile, []);
+  sessions.push({ token, userId: user.id, createdAt: new Date().toISOString() });
+  await writeJson(sessionsFile, sessions);
+  setSessionCookie(res, token);
+  res.status(201).json({ user: { id: user.id, name: user.name, email: user.email } });
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  const users = await readJson(usersFile, []);
+  const user = users.find(item => item.email === email?.trim().toLowerCase());
+  if (!user || !(await verifyPassword(password || '', user.passwordHash))) return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
+  const token = crypto.randomBytes(32).toString('hex');
+  const sessions = await readJson(sessionsFile, []);
+  sessions.push({ token, userId: user.id, createdAt: new Date().toISOString() });
+  await writeJson(sessionsFile, sessions);
+  setSessionCookie(res, token);
+  res.json({ user: { id: user.id, name: user.name, email: user.email } });
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  const token = getSessionToken(req);
+  const sessions = await readJson(sessionsFile, []);
+  const session = sessions.find(item => item.token === token);
+  const users = await readJson(usersFile, []);
+  const user = session && users.find(item => item.id === session.userId);
+  if (!user) return res.status(401).json({ authenticated: false });
+  res.json({ authenticated: true, user: { id: user.id, name: user.name, email: user.email } });
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  const token = getSessionToken(req);
+  const sessions = await readJson(sessionsFile, []);
+  await writeJson(sessionsFile, sessions.filter(item => item.token !== token));
+  res.setHeader('Set-Cookie', 'izi_session=; Path=/; HttpOnly; Max-Age=0');
+  res.json({ loggedOut: true });
+});
 
 app.get('/api/settings', async (req, res) => {
   res.json({ ...defaultSettings, ...await readJson(settingsFile, {}) });

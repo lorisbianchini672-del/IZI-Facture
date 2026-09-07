@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — izi Facturation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root { --purple: #7c3aed; --purple-dark: #4c1d95; --purple-soft: #faf5ff; --ink: #111827; --muted: #64748b; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: linear-gradient(135deg, #faf5ff, #f8fafc 55%, #eef2ff); }
+    .auth-shell { width: min(980px, 100%); display: grid; grid-template-columns: 0.9fr 1.1fr; overflow: hidden; background: #fff; border: 1px solid #e9d5ff; border-radius: 24px; box-shadow: 0 24px 70px #4c1d9520; }
+    .brand-panel { padding: 48px; color: #fff; background: linear-gradient(145deg, #4c1d95, #7c3aed 65%, #9333ea); }
+    .brand-panel a { color: inherit; text-decoration: none; font: 800 20px 'Plus Jakarta Sans'; }
+    .brand-panel h1 { margin: 90px 0 16px; font: 800 36px/1.1 'Plus Jakarta Sans'; }
+    .brand-panel p { max-width: 330px; color: #ede9fe; line-height: 1.7; }
+    .form-panel { padding: 42px; }
+    .tabs { display: flex; gap: 8px; padding: 4px; margin-bottom: 28px; background: #f1f5f9; border-radius: 12px; }
+    .tab { flex: 1; border: 0; border-radius: 9px; padding: 11px; background: transparent; color: var(--muted); font-weight: 700; cursor: pointer; }
+    .tab.active { color: var(--purple); background: #fff; box-shadow: 0 2px 6px #00000010; }
+    h2 { margin: 0 0 8px; font: 800 24px 'Plus Jakarta Sans'; }
+    .intro { margin: 0 0 24px; color: var(--muted); }
+    form { display: grid; gap: 15px; }
+    label { display: grid; gap: 7px; color: #334155; font-size: 13px; font-weight: 700; }
+    input { width: 100%; padding: 12px 13px; border: 1px solid #cbd5e1; border-radius: 9px; font: inherit; outline: 0; }
+    input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px #7c3aed20; }
+    .submit { margin-top: 6px; padding: 13px; border: 0; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #7c3aed, #9333ea); font-weight: 800; cursor: pointer; }
+    .message { min-height: 20px; margin: 4px 0 0; color: #b42318; font-size: 13px; }
+    .back { display: inline-block; margin-top: 24px; color: var(--purple); font-weight: 700; text-decoration: none; }
+    @media (max-width: 720px) { .auth-shell { grid-template-columns: 1fr; } .brand-panel { padding: 28px; } .brand-panel h1 { margin-top: 45px; font-size: 30px; } .form-panel { padding: 28px; } }
+  </style>
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="brand-panel">
+      <a href="index.html">izi Facturation <small>Lyon</small></a>
+      <h1>Votre espace de facturation, enfin simple.</h1>
+      <p>Créez vos factures, suivez vos encaissements et gardez vos documents professionnels au même endroit.</p>
+    </section>
+    <section class="form-panel">
+      <div class="tabs"><button class="tab active" data-mode="login">Se connecter</button><button class="tab" data-mode="register">Créer un compte</button></div>
+      <h2 id="title">Bienvenue</h2><p class="intro" id="intro">Accédez à votre espace client iziFacture.</p>
+      <form id="auth-form">
+        <label id="name-field" hidden>Nom de l'entreprise ou prénom<input id="name" autocomplete="organization" /></label>
+        <label>Email professionnel<input id="email" type="email" autocomplete="email" required /></label>
+        <label>Mot de passe<input id="password" type="password" minlength="8" autocomplete="current-password" required /></label>
+        <button class="submit" id="submit" type="submit">Se connecter</button>
+        <p class="message" id="message" role="alert"></p>
+      </form>
+      <a class="back" href="index.html">Retour au site</a>
+    </section>
+  </main>
+  <script>
+    let mode = 'login';
+    const nameField = document.getElementById('name-field');
+    const title = document.getElementById('title');
+    const intro = document.getElementById('intro');
+    const submit = document.getElementById('submit');
+    const message = document.getElementById('message');
+    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+      mode = tab.dataset.mode;
+      document.querySelectorAll('.tab').forEach(item => item.classList.toggle('active', item === tab));
+      nameField.hidden = mode !== 'register';
+      document.getElementById('name').required = mode === 'register';
+      title.textContent = mode === 'register' ? 'Créer votre compte' : 'Bienvenue';
+      intro.textContent = mode === 'register' ? 'Commencez à gérer vos factures en quelques secondes.' : 'Accédez à votre espace client iziFacture.';
+      submit.textContent = mode === 'register' ? 'Créer mon compte' : 'Se connecter';
+      message.textContent = '';
+    }));
+    document.getElementById('auth-form').addEventListener('submit', async event => {
+      event.preventDefault(); message.textContent = 'Connexion en cours...';
+      const payload = { email: document.getElementById('email').value, password: document.getElementById('password').value };
+      if (mode === 'register') payload.name = document.getElementById('name').value;
+      try {
+        const response = await fetch(`/api/auth/${mode}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Une erreur est survenue.');
+        window.location.href = 'dashboard.html';
+      } catch (error) { message.textContent = error.message; }
+    });
+  </script>
+</body>
+</html>
