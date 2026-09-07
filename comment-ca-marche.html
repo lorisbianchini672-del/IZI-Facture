@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comment ça marche — izi Facturation Lyon</title>
+    <meta name="description" content="Découvrez le fonctionnement simple et intuitif d'iziFacture pour les entreprises lyonnaises. Devis, factures Factur-X 2026, calcul de TVA et relances automatiques.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --purple-50: #FAF5FF;
+            --purple-100: #F3E8FF;
+            --purple-200: #E9D5FF;
+            --purple-300: #D8B4FE;
+            --purple-400: #C084FC;
+            --purple-500: #A855F7;
+            --purple-600: #9333EA;
+            --purple-700: #7C3AED;
+            --purple-800: #6D28D9;
+            --purple-900: #4C1D95;
+            --purple-950: #2E1065;
+
+            --gold-400: #FBBF24;
+            --gold-500: #F59E0B;
+            --success: #10B981;
+            --success-light: #ECFDF5;
+            --warning: #F59E0B;
+            --error: #EF4444;
+
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+
+            --bg-primary: #FFFFFF;
+            --bg-secondary: var(--purple-50);
+            --bg-gradient: linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #6D28D9 100%);
+            --bg-gradient-hover: linear-gradient(135deg, #6D28D9 0%, #7C3AED 50%, #9333EA 100%);
+            --bg-gradient-soft: linear-gradient(180deg, #FBF8FF 0%, #FFFFFF 100%);
+
+            --text-primary: var(--gray-900);
+            --text-secondary: var(--gray-600);
+            --text-muted: var(--gray-400);
+
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(124, 58, 237, 0.08);
+            --shadow-lg: 0 12px 28px -4px rgba(124, 58, 237, 0.12);
+            --shadow-xl: 0 24px 48px -12px rgba(124, 58, 237, 0.18);
+
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --radius-full: 9999px;
+
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 16px;
+            line-height: 1.65;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            opacity: 0.02;
+            z-index: 9999;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            line-height: 1.15;
+            color: var(--text-primary);
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .text-center { text-align: center; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: var(--radius-full);
+            background: var(--purple-100);
+            color: var(--purple-700);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            border: 1px solid var(--purple-200);
+        }
+
+        .section-tag::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--purple-600);
+        }
+
+        .text-gradient {
+            background: var(--bg-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s var(--ease-spring);
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 15px 35px -5px rgba(124, 58, 237, 0.55);
+            background: var(--bg-gradient-hover);
+        }
+
+        .btn-secondary {
+            background: #FFFFFF;
+            color: var(--purple-700);
+            border: 1.5px solid var(--purple-200);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            background: var(--purple-50);
+            border-color: var(--purple-400);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-white {
+            background: #FFFFFF;
+            color: var(--purple-800);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+
+        .btn-white:hover {
+            background: #FAFAFA;
+            color: var(--purple-900);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+        }
+
+        .btn-lg {
+            padding: 16px 34px;
+            font-size: 16px;
+            border-radius: var(--radius-lg);
+        }
+
+        /* NAVBAR */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(233, 213, 255, 0.7);
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.04);
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--gray-900);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+        }
+
+        .logo-badge {
+            font-size: 10px;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: 2px;
+        }
+
+        .navbar-links {
+            display: none;
+            list-style: none;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .navbar-links a {
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-600);
+            transition: color 0.2s ease;
+        }
+
+        .navbar-links a:hover, .navbar-links a.active {
+            color: var(--purple-700);
+        }
+
+        .navbar-actions {
+            display: none;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .navbar-login {
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gray-700);
+            transition: color 0.2s ease;
+        }
+
+        .navbar-login:hover {
+            color: var(--purple-700);
+        }
+
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .hamburger span {
+            width: 24px;
+            height: 2px;
+            background: var(--gray-800);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        @media (min-width: 900px) {
+            .navbar-links { display: flex; }
+            .navbar-actions { display: flex; }
+            .hamburger { display: none; }
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0; right: -100%;
+            width: 80%; max-width: 340px;
+            height: 100vh;
+            background: #FFFFFF;
+            padding: 80px 28px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.1);
+            transition: right 0.35s ease;
+            z-index: 999;
+        }
+
+        .mobile-menu.open { right: 0; }
+
+        .mobile-menu a {
+            text-decoration: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--gray-800);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .mobile-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 998;
+        }
+
+        .mobile-backdrop.open { opacity: 1; pointer-events: all; }
+
+        /* HERO HEADER */
+        .page-header {
+            padding: 160px 0 70px;
+            background: var(--bg-gradient-soft);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-glow {
+            position: absolute;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .page-header h1 {
+            font-size: clamp(34px, 5vw, 52px);
+            margin-bottom: 18px;
+            letter-spacing: -0.03em;
+        }
+
+        .page-header p {
+            font-size: 19px;
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0 auto 32px;
+            line-height: 1.65;
+        }
+
+        /* DETAILED STEPS SECTION */
+        .workflow-section {
+            padding: 80px 0 100px;
+            background: #FFFFFF;
+        }
+
+        .workflow-step-card {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            align-items: center;
+            padding: 48px 40px;
+            background: #FFFFFF;
+            border: 1.5px solid var(--purple-100);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .workflow-step-card:hover {
+            border-color: var(--purple-300);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+        }
+
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: var(--bg-gradient);
+            color: white;
+            border-radius: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .workflow-content h2 {
+            font-size: 28px;
+            margin-bottom: 14px;
+        }
+
+        .workflow-content p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .feature-bullets {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feature-bullets li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .feature-bullets li svg {
+            color: var(--success);
+            flex-shrink: 0;
+        }
+
+        /* Interactive preview frames inside steps */
+        .step-visual-preview {
+            background: var(--purple-50);
+            border: 1px solid var(--purple-200);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .visual-card {
+            background: #FFFFFF;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .visual-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--purple-900);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .visual-field {
+            margin-bottom: 10px;
+        }
+
+        .visual-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .visual-input {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        @media (min-width: 900px) {
+            .workflow-step-card {
+                grid-template-columns: 1.1fr 1fr;
+                gap: 56px;
+            }
+
+            .workflow-step-card.reversed {
+                grid-template-columns: 1fr 1.1fr;
+            }
+
+            .workflow-step-card.reversed .workflow-content {
+                order: 2;
+            }
+
+            .workflow-step-card.reversed .step-visual-preview {
+                order: 1;
+            }
+        }
+
+        /* FAQ SECTION */
+        .faq-section {
+            padding: 96px 0;
+            background: var(--bg-gradient-soft);
+        }
+
+        .faq-grid {
+            max-width: 800px;
+            margin: 48px auto 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .faq-item {
+            background: #FFFFFF;
+            border: 1.5px solid var(--purple-100);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+
+        .faq-item:hover {
+            border-color: var(--purple-300);
+        }
+
+        .faq-question {
+            padding: 22px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .faq-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--purple-50);
+            color: var(--purple-700);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.open .faq-toggle {
+            transform: rotate(45deg);
+            background: var(--purple-600);
+            color: white;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.35s ease;
+            padding: 0 28px;
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 250px;
+            padding: 0 28px 24px;
+        }
+
+        /* FINAL CTA BANNER */
+        .final-cta {
+            padding: 80px 0 100px;
+            background: #FFFFFF;
+        }
+
+        .cta-banner {
+            background: var(--bg-gradient);
+            border-radius: var(--radius-xl);
+            padding: 68px 36px;
+            text-align: center;
+            color: #FFFFFF;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .cta-banner h2 {
+            color: #FFFFFF;
+            font-size: clamp(30px, 4vw, 44px);
+            margin-bottom: 16px;
+            max-width: 680px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-banner p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 18px;
+            margin-bottom: 36px;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* FOOTER */
+        .footer {
+            background: var(--gray-900);
+            color: var(--gray-400);
+            padding: 72px 0 32px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            padding-bottom: 48px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-brand h3 {
+            color: #FFFFFF;
+            font-size: 22px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-col h4 {
+            color: #FFFFFF;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-col ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-col a {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+
+        .footer-col a:hover {
+            color: #FFFFFF;
+        }
+
+        .footer-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding-top: 28px;
+            font-size: 14px;
+        }
+
+        @media (min-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 1.4fr 1fr 1fr 1fr;
+            }
+            .footer-bottom {
+                flex-direction: row;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== NAVBAR ====== -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-logo">
+                <div class="logo-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <span>izi Facturation <span class="logo-badge">Lyon</span></span>
+            </a>
+
+            <ul class="navbar-links">
+                <li><a href="index.html#problemes">Pourquoi nous</a></li>
+                <li><a href="index.html#fonctionnalites">Fonctionnalités</a></li>
+                <li><a href="comment-ca-marche.html" class="active">Comment ça marche</a></li>
+                <li><a href="index.html#tarifs">Tarifs</a></li>
+                <li><a href="index.html#temoignages">Avis</a></li>
+            </ul>
+
+            <div class="navbar-actions">
+                <a href="dashboard.html" class="navbar-login">Espace Client</a>
+                <a href="index.html#tarifs" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;">Essai gratuit</a>
+            </div>
+
+            <button class="hamburger" id="hamburger" aria-label="Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile menu -->
+    <div class="mobile-backdrop" id="mobile-backdrop"></div>
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="index.html">Accueil</a>
+        <a href="index.html#fonctionnalites">Fonctionnalités</a>
+        <a href="comment-ca-marche.html">Comment ça marche</a>
+        <a href="index.html#tarifs">Tarifs</a>
+        <a href="dashboard.html" class="btn btn-primary" style="margin-top: 12px;">Accéder au Dashboard</a>
+    </div>
+
+    <!-- ====== PAGE HEADER ====== -->
+    <header class="page-header">
+        <div class="header-glow"></div>
+        <div class="container">
+            <span class="section-tag">Guide & Fonctionnement</span>
+            <h1>Comment fonctionne <span class="text-gradient">iziFacture</span></h1>
+            <p>
+                Découvrez pas à pas comment créer vos factures Factur-X 2026, automatiser votre TVA française et encaisser vos paiements sans prise de tête.
+            </p>
+            <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap;">
+                <a href="dashboard.html" class="btn btn-primary btn-lg">Tester le Dashboard en direct</a>
+                <a href="#faq" class="btn btn-secondary btn-lg">Questions Fréquentes</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ====== WORKFLOW DETAILS ====== -->
+    <section class="workflow-section">
+        <div class="container">
+
+            <!-- Étape 1 -->
+            <div class="workflow-step-card">
+                <div class="workflow-content">
+                    <div class="step-badge">1</div>
+                    <h2>Configuration instantanée avec votre SIRET</h2>
+                    <p>
+                        Fini de remplir laborieusement vos coordonnées administratives. Renseignez simplement votre numéro SIRET lyonnais : iziFacture récupère instantanément la dénomination sociale, l'adresse du siège, le code APE et le numéro de TVA intracommunautaire depuis l'INSEE.
+                    </p>
+                    <ul class="feature-bullets">
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Ajout de votre logo et charte graphique en 1 clic
+                        </li>
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Mentions légales obligatoires conformes au Code de Commerce
+                        </li>
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Intégration de vos coordonnées bancaires IBAN / BIC
+                        </li>
+                    </ul>
+                </div>
+                <div class="step-visual-preview">
+                    <div class="visual-card">
+                        <div class="visual-card-title">
+                            <span>Informations Entreprise (RCS Lyon)</span>
+                            <span style="color:var(--success); font-size:12px;">● Vérifié INSEE</span>
+                        </div>
+                        <div class="visual-field">
+                            <div class="visual-label">Numéro SIRET</div>
+                            <div class="visual-input mono">849 203 118 00024</div>
+                        </div>
+                        <div class="visual-field">
+                            <div class="visual-label">Raison Sociale</div>
+                            <div class="visual-input">Studio Lumina Digital SAS</div>
+                        </div>
+                        <div class="visual-field">
+                            <div class="visual-label">Siège Social</div>
+                            <div class="visual-input">45 Quai Rambaud, 69002 Lyon</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Étape 2 -->
+            <div class="workflow-step-card reversed">
+                <div class="workflow-content">
+                    <div class="step-badge">2</div>
+                    <h2>Édition ultra-rapide & calcul automatique de la TVA</h2>
+                    <p>
+                        Sélectionnez votre client ou ajoutez-le à la volée. Choisissez vos articles ou prestations : le logiciel calcule immédiatement les montants HT, les remises éventuelles et les différents taux de TVA (20%, 10%, 5,5% ou exonération franchise en base art. 293 B du CGI).
+                    </p>
+                    <ul class="feature-bullets">
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Conforme Factur-X & Réforme Facturation Électronique 2026
+                        </li>
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Numérotation chronologique continue sans rupture
+                        </li>
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Transformation de devis en facture en 1 clic
+                        </li>
+                    </ul>
+                </div>
+                <div class="step-visual-preview">
+                    <div class="visual-card">
+                        <div class="visual-card-title">
+                            <span>Ligne de Facture #FAC-2026-089</span>
+                            <span style="color:var(--purple-700); font-weight:700;">TVA 20%</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px;">
+                            <span>Prestation Conseil Stratégie Digitale</span>
+                            <span class="mono font-bold">1 200,00 € HT</span>
+                        </div>
+                        <div style="background:var(--gray-50); padding:12px; border-radius:8px; font-size:13px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <span style="color:var(--gray-500);">Total HT</span>
+                                <span class="mono">1 200,00 €</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <span style="color:var(--gray-500);">TVA (20%)</span>
+                                <span class="mono">240,00 €</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:15px; color:var(--purple-900); padding-top:6px; border-top:1px solid var(--gray-200);">
+                                <span>Total TTC</span>
+                                <span class="mono">1 440,00 €</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Étape 3 -->
+            <div class="workflow-step-card">
+                <div class="workflow-content">
+                    <div class="step-badge">3</div>
+                    <h2>Envoi multicanal, Paiement en ligne & Relances</h2>
+                    <p>
+                        Transmettez vos factures directement par email avec un lien de paiement sécurisé par Carte Bancaire ou Virement SEPA. Dès qu'une facture arrive à échéance, des relances courtoises et automatiques sont envoyées sans que vous n'ayez à y penser.
+                    </p>
+                    <ul class="feature-bullets">
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Notification dès l'ouverture de la facture par le client
+                        </li>
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Encaissement 2,5x plus rapide grâce au paiement par carte
+                        </li>
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Export FEC prêt pour votre expert-comptable
+                        </li>
+                    </ul>
+                </div>
+                <div class="step-visual-preview">
+                    <div class="visual-card">
+                        <div class="visual-card-title">
+                            <span>Statut d'encaissement en direct</span>
+                            <span style="background:#DEF7EC; color:#03543F; font-size:11px; padding:3px 8px; border-radius:12px; font-weight:700;">Payé en ligne</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px; padding:12px 0;">
+                            <div style="width:36px; height:36px; border-radius:50%; background:#10B981; color:white; display:flex; align-items:center; justify-content:center;">✓</div>
+                            <div>
+                                <div style="font-weight:700; font-size:14px;">1 440,00 € encaissés</div>
+                                <div style="font-size:12px; color:var(--gray-500);">Carte Bancaire • Reçu envoyé</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ====== FAQ SECTION ====== -->
+    <section class="faq-section" id="faq">
+        <div class="container">
+            <div class="text-center">
+                <span class="section-tag">FAQ</span>
+                <h2 style="font-size:36px; margin-bottom:12px;">Questions Fréquentes</h2>
+                <p style="color:var(--text-secondary); max-width:560px; margin:0 auto;">
+                    Tout ce que vous devez savoir pour démarrer avec iziFacture à Lyon.
+                </p>
+            </div>
+
+            <div class="faq-grid">
+                <div class="faq-item open">
+                    <div class="faq-question">
+                        <span>Le logiciel est-il conforme à la réforme Factur-X 2026 ?</span>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        Oui, absolument. iziFacture intègre nativement la norme Factur-X (format hybride PDF lisible + XML structuré). Vos factures seront automatiquement prêtes pour les plateformes de dématérialisation partenaires (PDP) et le portail public de facturation.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Puis-je l'utiliser si je suis auto-entrepreneur ou micro-entreprise ?</span>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        Tout à fait. iziFacture gère l'exonération de TVA avec l'insertion automatique de la mention légale obligatoire : <em>« TVA non applicable, art. 293 B du CGI »</em>. Si vous dépassez les seuils, vous pouvez activer les taux de TVA en un simple clic.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Comment mon expert-comptable récupère-t-il les données ?</span>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        Vous pouvez lui créer un accès sécurisé dédié en lecture seule, ou exporter en 1 clic vos journaux de ventes au format FEC (Fichier des Écritures Comptables) compatible avec tous les logiciels de comptabilité (Sage, Cegid, Pennylane, ACD).
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Où sont hébergées mes données et factures ?</span>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        Toutes vos données et factures sont chiffrées (AES-256) et hébergées sur des serveurs sécurisés situés exclusivement en France, en stricte conformité avec le RGPD et les règles de conservation fiscale française (10 ans).
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== FINAL CTA ====== -->
+    <section class="final-cta">
+        <div class="container">
+            <div class="cta-banner">
+                <h2>Prêt à simplifier la facturation de votre entreprise ?</h2>
+                <p>Rejoignez les dirigeants lyonnais qui gagnent jusqu'à 4 heures par semaine.</p>
+                <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+                    <a href="dashboard.html" class="btn btn-white btn-lg">Accéder à l'espace de démonstration</a>
+                    <a href="index.html#tarifs" class="btn btn-secondary btn-lg" style="background:transparent; color:white; border-color:rgba(255,255,255,0.4);">Voir les tarifs (€)</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== FOOTER ====== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>
+                        <div class="logo-icon" style="width:32px; height:32px; border-radius:8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        </div>
+                        iziFacture Lyon
+                    </h3>
+                    <p>
+                        La solution moderne de facturation et de gestion pour les indépendants, TPE et PME de la Métropole de Lyon et d'Auvergne-Rhône-Alpes.
+                    </p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Navigation</h4>
+                    <ul>
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="index.html#fonctionnalites">Fonctionnalités</a></li>
+                        <li><a href="comment-ca-marche.html">Comment ça marche</a></li>
+                        <li><a href="index.html#tarifs">Tarifs</a></li>
+                        <li><a href="dashboard.html">Espace Client</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Ressources</h4>
+                    <ul>
+                        <li><a href="#faq">FAQ & Support</a></li>
+                        <li><a href="#">Guide Réforme 2026</a></li>
+                        <li><a href="#">Modèles Devis Gratuit</a></li>
+                        <li><a href="#">Contact Lyon</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Légal</h4>
+                    <ul>
+                        <li><a href="#">Mentions Légales</a></li>
+                        <li><a href="#">Confidentialité (RGPD)</a></li>
+                        <li><a href="#">Conditions Générales</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>© 2026 iziFacture France. Tous droits réservés.</p>
+                <div>🦁 Conçu pour les professionnels de la Métropole de Lyon</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ====== JAVASCRIPT ====== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Navbar scroll
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                navbar.classList.toggle('scrolled', window.scrollY > 40);
+            }, { passive: true });
+
+            // Mobile menu
+            const hamburger = document.getElementById('hamburger');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const backdrop = document.getElementById('mobile-backdrop');
+
+            function toggleMenu() {
+                const isOpen = mobileMenu.classList.contains('open');
+                mobileMenu.classList.toggle('open');
+                backdrop.classList.toggle('open');
+                document.body.style.overflow = isOpen ? '' : 'hidden';
+            }
+
+            hamburger.addEventListener('click', toggleMenu);
+            backdrop.addEventListener('click', toggleMenu);
+
+            // FAQ Accordion
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', () => {
+                    const isOpen = item.classList.contains('open');
+                    faqItems.forEach(other => other.classList.remove('open'));
+                    if (!isOpen) {
+                        item.classList.add('open');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

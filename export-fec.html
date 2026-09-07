@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export FEC & Accès Expert-Comptable — izi Facturation Lyon</title>
+    <meta name="description" content="Générez et téléchargez votre Fichier des Écritures Comptables (FEC) conforme DGFIP et l'archive des factures Factur-X en 1 clic.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --purple-50: #FAF5FF;
+            --purple-100: #F3E8FF;
+            --purple-200: #E9D5FF;
+            --purple-300: #D8B4FE;
+            --purple-400: #C084FC;
+            --purple-500: #A855F7;
+            --purple-600: #9333EA;
+            --purple-700: #7C3AED;
+            --purple-800: #6D28D9;
+            --purple-900: #4C1D95;
+
+            --success: #10B981;
+            --success-bg: #DEF7EC;
+            --success-text: #03543F;
+            --warning: #F59E0B;
+            --error: #EF4444;
+
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --gray-900: #0F172A;
+
+            --bg-body: #F8FAFC;
+            --border-card: #E2E8F0;
+            --bg-gradient: linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #6D28D9 100%);
+            --shadow-subtle: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-card: 0 4px 14px rgba(0,0,0,0.04);
+            --shadow-float: 0 12px 30px -4px rgba(124, 58, 237, 0.2);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14.5px;
+            background: var(--bg-body);
+            color: var(--gray-800);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            color: var(--gray-900);
+            letter-spacing: -0.02em;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: #FFFFFF;
+            border-right: 1px solid var(--border-card);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--gray-100);
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--bg-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-text {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--gray-900);
+        }
+
+        .brand-badge {
+            font-size: 9px;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            padding: 2px 6px;
+            border-radius: var(--radius-full);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav {
+            padding: 20px 14px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gray-400);
+            padding: 8px 12px 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: var(--purple-50);
+            color: var(--purple-700);
+        }
+
+        .nav-item.active {
+            background: var(--purple-50);
+            color: var(--purple-700);
+            font-weight: 700;
+            border-left: 3px solid var(--purple-600);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--gray-100);
+            background: var(--gray-50);
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7C3AED, #A855F7);
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--gray-900);
+        }
+
+        .user-role {
+            font-size: 11.5px;
+            color: var(--gray-500);
+        }
+
+        /* MAIN */
+        .main-wrapper {
+            margin-left: 260px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 72px;
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-card);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.45);
+        }
+
+        .btn-outline {
+            background: #FFFFFF;
+            border: 1.5px solid var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .content-container {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        /* EXPORT ACTIONS GRID */
+        .export-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .export-card {
+            background: #FFFFFF;
+            border: 1.5px solid var(--border-card);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: all 0.25s ease;
+        }
+
+        .export-card:hover {
+            border-color: var(--purple-300);
+            box-shadow: var(--shadow-card);
+            transform: translateY(-2px);
+        }
+
+        .export-icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--purple-50);
+            color: var(--purple-700);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .export-card h3 {
+            font-size: 19px;
+            margin-bottom: 8px;
+        }
+
+        .export-card p {
+            color: var(--gray-600);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        /* FEC PREVIEW CODE BOX */
+        .fec-code-preview {
+            background: var(--gray-900);
+            color: #E2E8F0;
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            font-family: 'Space Mono', monospace;
+            font-size: 12.5px;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.6;
+            margin-top: 12px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 28px; right: 28px;
+            background: var(--gray-900);
+            color: white;
+            padding: 14px 22px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 2000;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; }
+            .content-container { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <a href="index.html" class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            </div>
+            <div>
+                <span class="brand-text">izi Facturation</span>
+                <span class="brand-badge">Lyon</span>
+            </div>
+        </a>
+
+        <div class="sidebar-nav">
+            <span class="nav-label">Menu Principal</span>
+            <a href="dashboard.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Tableau de bord
+            </a>
+            <a href="devis.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Factures & Devis
+            </a>
+            <a href="clients.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Répertoire Clients
+            </a>
+            <a href="transactions-tva.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Transactions & TVA
+            </a>
+
+            <span class="nav-label" style="margin-top:16px;">Comptabilité & Exports</span>
+            <a href="export-fec.html" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>
+                Export FEC Expert
+            </a>
+            <a href="index.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                Retour au Site
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar">IF</div>
+                <div>
+                    <div class="user-name">Mon Entreprise</div>
+                    <div class="user-role">Lyon • Plan Pro</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div>
+                <span style="font-size:13px; font-weight:700; color:var(--success-text); background:var(--success-bg); padding:4px 12px; border-radius:var(--radius-full);">
+                    ✓ Écritures Équilibrées (Débit = Crédit = 34 922,00 €)
+                </span>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <button class="btn btn-outline" onclick="downloadSampleFEC()">📥 Télécharger FEC (.txt)</button>
+                <button class="btn btn-primary" onclick="downloadZipArchive()">📦 Télécharger Archive Factur-X (ZIP)</button>
+            </div>
+        </header>
+
+        <main class="content-container">
+            <div>
+                <h1>Exportation Comptable & FEC Conforme DGFIP</h1>
+                <p style="color:var(--gray-500); margin-top:2px;">Transmettez en un clic vos journaux de ventes et pièces justificatives à votre cabinet d'expertise comptable</p>
+            </div>
+
+            <!-- EXPORT ACTION CARDS -->
+            <div class="export-grid">
+                <!-- FEC File -->
+                <div class="export-card">
+                    <div>
+                        <div class="export-icon-box">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        </div>
+                        <h3>Fichier FEC (Norme DGFIP)</h3>
+                        <p>Générez le fichier normalisé d'écritures comptables (art. L. 47 A-I du LPF) compatible avec Sage, Cegid, Pennylane, ACD, EBP et MyUnisoft.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="downloadSampleFEC()">
+                        📥 Exporter FEC_849203118_2026.txt
+                    </button>
+                </div>
+
+                <!-- Factures Archive ZIP -->
+                <div class="export-card">
+                    <div>
+                        <div class="export-icon-box" style="background:#ECFDF5; color:#059669;">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                        </div>
+                        <h3>Archive Factur-X & Devis (ZIP)</h3>
+                        <p>Téléchargez toutes les factures émises au format PDF hybride Factur-X (lisible + XML conforme 2026) horodatées et prêtes pour l'archivage légal 10 ans.</p>
+                    </div>
+                    <button class="btn btn-outline" style="border-color:var(--success); color:#059669;" onclick="downloadZipArchive()">
+                        📦 Télécharger l'Archive Complète (.zip)
+                    </button>
+                </div>
+
+                <!-- Direct Accountant Access -->
+                <div class="export-card">
+                    <div>
+                        <div class="export-icon-box" style="background:#FEF3C7; color:#B45309;">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path></svg>
+                        </div>
+                        <h3>Invitation Expert-Comptable</h3>
+                        <p>Donnez un accès direct et sécurisé en lecture seule à votre expert-comptable lyonnais pour qu'il récupère les écritures automatiquement chaque mois.</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="inviteAccountant()">
+                        ✉️ Inviter mon cabinet comptable
+                    </button>
+                </div>
+            </div>
+
+            <!-- PREVIEW FEC STRUCTURE -->
+            <div style="background:#FFFFFF; border:1px solid var(--border-card); border-radius:var(--radius-xl); padding:28px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3>Aperçu du Fichier FEC Conforme</h3>
+                        <p style="font-size:13px; color:var(--gray-500);">Séparateur tabulation / En-têtes obligatoires DGFIP</p>
+                    </div>
+                    <button class="btn btn-outline" style="font-size:12px; padding:6px 12px;" onclick="downloadSampleFEC()">Copier / Télécharger</button>
+                </div>
+
+                <div class="fec-code-preview">JournalCode	JournalLib	EcritureNum	EcritureDate	CompteNum	CompteLib	CompAuxNum	CompAuxLib	PieceRef	PieceDate	EcritureLib	Debit	Credit	EcritureLet	DateLet	ValidDate	Montantdevise	Idevise
+VT	Journal des Ventes	00001	20260901	411000	Clients	411GARET	Bouchon Le Garet	FAC-2026-098	20260901	Prestations restauration	1420.00	0.00			20260901		
+VT	Journal des Ventes	00001	20260901	706000	Prestations de services			FAC-2026-098	20260901	Prestations restauration	0.00	1183.33			20260901		
+VT	Journal des Ventes	00001	20260901	445710	TVA Collectee 20%			FAC-2026-098	20260901	TVA sur facture 098	0.00	236.67			20260901		
+VT	Journal des Ventes	00002	20260828	411000	Clients	411CONF	Confluence Digital	FAC-2026-097	20260828	Prestations web	3850.00	0.00			20260828		
+VT	Journal des Ventes	00002	20260828	706000	Prestations de services			FAC-2026-097	20260828	Prestations web	0.00	3208.33			20260828		
+VT	Journal des Ventes	00002	20260828	445710	TVA Collectee 20%			FAC-2026-097	20260828	TVA sur facture 097	0.00	641.67			20260828		</div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast">Notification</div>
+
+    <script>
+        // Real FEC file download generator in browser
+        function downloadSampleFEC() {
+            const fecContent = `JournalCode\tJournalLib\tEcritureNum\tEcritureDate\tCompteNum\tCompteLib\tCompAuxNum\tCompAuxLib\tPieceRef\tPieceDate\tEcritureLib\tDebit\tCredit\tEcritureLet\tDateLet\tValidDate\tMontantdevise\tIdevise
+VT\tJournal des Ventes\t00001\t20260901\t411000\tClients\t411GARET\tBouchon Le Garet\tFAC-2026-098\t20260901\tPrestations restauration\t1420.00\t0.00\t\t\t20260901\t\t
+VT\tJournal des Ventes\t00001\t20260901\t706000\tPrestations de services\t\t\tFAC-2026-098\t20260901\tPrestations restauration\t0.00\t1183.33\t\t\t20260901\t\t
+VT\tJournal des Ventes\t00001\t20260901\t445710\tTVA Collectee 20%\t\t\tFAC-2026-098\t20260901\tTVA sur facture 098\t0.00\t236.67\t\t\t20260901\t\t
+VT\tJournal des Ventes\t00002\t20260828\t411000\tClients\t411CONF\tConfluence Digital\tFAC-2026-097\t20260828\tPrestations web\t3850.00\t0.00\t\t\t20260828\t\t
+VT\tJournal des Ventes\t00002\t20260828\t706000\tPrestations de services\t\t\tFAC-2026-097\t20260828\tPrestations web\t0.00\t3208.33\t\t\t20260828\t\t
+VT\tJournal des Ventes\t00002\t20260828\t445710\tTVA Collectee 20%\t\t\tFAC-2026-097\t20260828\tTVA sur facture 097\t0.00\t641.67\t\t\t20260828\t\t`;
+
+            const blob = new Blob([fecContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'FEC_84920311800024_20260905.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('Fichier FEC_84920311800024_20260905.txt téléchargé avec succès !');
+        }
+
+        function downloadZipArchive() {
+            showToast('Téléchargement de l\'archive ZIP des factures Factur-X 2026...');
+            setTimeout(() => {
+                const sampleBlob = new Blob(["Archive Factur-X IziFacture Lyon 2026"], { type: 'application/zip' });
+                const url = URL.createObjectURL(sampleBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Factures_FacturX_IziFacture_2026.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('Archive Factures_FacturX_IziFacture_2026.zip enregistrée sur votre ordinateur !');
+            }, 800);
+        }
+
+        function inviteAccountant() {
+            const email = prompt("Saisissez l'email de votre cabinet comptable :", "cabinet.compta@lyon-experts.fr");
+            if (email) {
+                showToast(`Invitation et lien d'accès sécurisé envoyés à ${email} !`);
+            }
+        }
+
+        let tTimeout;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'flex';
+            clearTimeout(tTimeout);
+            tTimeout = setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+    </script>
+</body>
+</html>
+

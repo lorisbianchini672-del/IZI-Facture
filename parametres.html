@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Paramètres entreprise — izi Facturation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; } body { margin: 0; background: #f8fafc; color: #172033; font-family: 'DM Sans', sans-serif; }
+        .layout { display: flex; min-height: 100vh; } .sidebar { width: 260px; background: #fff; border-right: 1px solid #e2e8f0; padding: 24px 14px; }
+        .brand { display: block; color: #172033; font: 800 18px 'Plus Jakarta Sans'; padding: 0 8px 25px; text-decoration: none; }
+        .nav { display: grid; gap: 5px; } .nav a { padding: 11px 14px; border-radius: 10px; color: #475569; font-weight: 600; text-decoration: none; }
+        .nav a:hover, .nav a.active { background: #faf5ff; color: #7c3aed; } main { flex: 1; padding: 42px; max-width: 1000px; }
+        h1, h2 { font-family: 'Plus Jakarta Sans'; } h1 { margin: 0 0 8px; } .intro { color: #64748b; margin-bottom: 28px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 28px; box-shadow: 0 4px 14px #00000008; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; } .field { display: grid; gap: 7px; } .field.full { grid-column: 1 / -1; }
+        label { font-weight: 700; font-size: 13px; } input { width: 100%; border: 1px solid #cbd5e1; border-radius: 9px; padding: 11px 12px; font: inherit; }
+        .actions { display: flex; justify-content: flex-end; margin-top: 24px; } button { border: 0; background: linear-gradient(135deg,#7c3aed,#9333ea); color: white; border-radius: 10px; padding: 12px 20px; font-weight: 700; cursor: pointer; }
+        #message { margin-right: 12px; color: #047857; align-self: center; } @media (max-width: 720px) { .layout { display: block; } .sidebar { width: auto; } main { padding: 24px 18px; } .grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar"><a class="brand" href="index.html">izi Facturation <small style="color:#7c3aed">Lyon</small></a><nav class="nav"><a href="dashboard.html">Tableau de bord</a><a href="devis.html">Factures & Devis</a><a href="clients.html">Répertoire Clients</a><a href="transactions-tva.html">Transactions & TVA</a><a href="export-fec.html">Export FEC Expert</a><a class="active" href="parametres.html">Paramètres</a></nav></aside>
+    <main><h1>Paramètres entreprise</h1><p class="intro">Ces informations seront automatiquement reprises sur vos prochaines factures.</p><section class="card"><h2>Informations légales et professionnelles</h2><form id="settings-form"><div class="grid"><div class="field"><label for="legalName">Nom légal</label><input id="legalName" required></div><div class="field"><label for="registration">RC / SIRET</label><input id="registration"></div><div class="field"><label for="ninea">NINEA</label><input id="ninea"></div><div class="field"><label for="plater">PLATO</label><input id="plater"></div><div class="field"><label for="billingEmail">Email de factures pro</label><input id="billingEmail" type="email"></div><div class="field"><label for="phone">Téléphone pro</label><input id="phone" type="tel"></div><div class="field full"><label for="billingAddress">Adresse de facturation</label><input id="billingAddress"></div></div><div class="actions"><span id="message"></span><button type="submit">Enregistrer les paramètres</button></div></form></section></main>
+</div>
+<script>
+const fields = ['legalName', 'registration', 'ninea', 'plater', 'billingEmail', 'billingAddress', 'phone'];
+fetch('/api/settings').then(response => response.json()).then(settings => fields.forEach(field => { document.getElementById(field).value = settings[field] || ''; }));
+document.getElementById('settings-form').addEventListener('submit', async event => { event.preventDefault(); const values = Object.fromEntries(fields.map(field => [field, document.getElementById(field).value])); const response = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }); document.getElementById('message').textContent = response.ok ? 'Paramètres enregistrés.' : 'Impossible d’enregistrer.'; });
+</script>
+</body>
+</html>

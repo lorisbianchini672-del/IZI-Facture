@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Client — izi Facturation Lyon Dashboard</title>
+    <meta name="description" content="Tableau de bord de facturation pour les entreprises lyonnaises. Suivi du chiffre d'affaires, factures Factur-X, relances d'impayés et TVA.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --purple-50: #FAF5FF;
+            --purple-100: #F3E8FF;
+            --purple-200: #E9D5FF;
+            --purple-300: #D8B4FE;
+            --purple-400: #C084FC;
+            --purple-500: #A855F7;
+            --purple-600: #9333EA;
+            --purple-700: #7C3AED;
+            --purple-800: #6D28D9;
+            --purple-900: #4C1D95;
+
+            --gold-400: #FBBF24;
+            --gold-500: #F59E0B;
+            --success: #10B981;
+            --success-bg: #DEF7EC;
+            --success-text: #03543F;
+            --warning: #F59E0B;
+            --warning-bg: #FEF3C7;
+            --warning-text: #92400E;
+            --error: #EF4444;
+            --error-bg: #FEE2E2;
+            --error-text: #991B1B;
+
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --gray-900: #0F172A;
+
+            --bg-body: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --border-card: #E2E8F0;
+            --bg-gradient: linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #6D28D9 100%);
+            --shadow-subtle: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-card: 0 4px 14px rgba(0,0,0,0.04);
+            --shadow-float: 0 12px 30px -4px rgba(124, 58, 237, 0.2);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14.5px;
+            background: var(--bg-body);
+            color: var(--gray-800);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            color: var(--gray-900);
+            letter-spacing: -0.02em;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* ========================================
+           SIDEBAR
+           ======================================== */
+        .sidebar {
+            width: 260px;
+            background: #FFFFFF;
+            border-right: 1px solid var(--border-card);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--gray-100);
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--bg-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-text {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--gray-900);
+        }
+
+        .brand-badge {
+            font-size: 9px;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            padding: 2px 6px;
+            border-radius: var(--radius-full);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav {
+            padding: 20px 14px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gray-400);
+            padding: 8px 12px 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: var(--purple-50);
+            color: var(--purple-700);
+        }
+
+        .nav-item.active {
+            background: var(--purple-50);
+            color: var(--purple-700);
+            font-weight: 700;
+            border-left: 3px solid var(--purple-600);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--gray-100);
+            background: var(--gray-50);
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7C3AED, #A855F7);
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--gray-900);
+        }
+
+        .user-role {
+            font-size: 11.5px;
+            color: var(--gray-500);
+        }
+
+        /* ========================================
+           MAIN CONTENT AREA
+           ======================================== */
+        .main-wrapper {
+            margin-left: 260px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            height: 72px;
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-card);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+        }
+
+        .search-box {
+            position: relative;
+            width: 320px;
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+            width: 16px;
+            height: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 9px 16px 9px 40px;
+            background: var(--gray-50);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            color: var(--gray-800);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-box input:focus {
+            background: #FFFFFF;
+            border-color: var(--purple-400);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.45);
+        }
+
+        .btn-outline {
+            background: #FFFFFF;
+            border: 1.5px solid var(--border-card);
+            color: var(--gray-700);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+        }
+
+        /* PERIOD DROPDOWN FILTER (HIGH CONTRAST & VISIBLE) */
+        .period-selector-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .period-select-custom {
+            appearance: none;
+            -webkit-appearance: none;
+            background: #FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237C3AED' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 14px center;
+            border: 2px solid var(--purple-300);
+            border-radius: var(--radius-md);
+            padding: 9px 38px 9px 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--purple-900);
+            box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .period-select-custom:hover, .period-select-custom:focus {
+            border-color: var(--purple-600);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+        }
+
+        .notification-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gray-50);
+            border: 1px solid var(--border-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-600);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--purple-600);
+            border-radius: 50%;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            border: 2px solid white;
+        }
+
+        /* ========================================
+           DASHBOARD BODY
+           ======================================== */
+        .content-container {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 26px;
+        }
+
+        .dashboard-header p {
+            color: var(--gray-500);
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        /* KPI STATS CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        /* ========================================
+           INTERACTIVE CALENDAR WIDGET
+           ======================================== */
+        .calendar-widget-card {
+            background: #FFFFFF;
+            border: 1.5px solid var(--purple-200);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(124, 58, 237, 0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .cal-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .cal-icon-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .cal-nav-btn {
+            background: #FFFFFF;
+            border: 1.5px solid var(--gray-200);
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cal-nav-btn:hover {
+            border-color: var(--purple-400);
+            color: var(--purple-700);
+            background: var(--purple-50);
+        }
+
+        .cal-month-current {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            color: var(--purple-900);
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .months-strip {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+        }
+
+        .month-pill {
+            background: var(--gray-100);
+            border: none;
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--gray-600);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .month-pill:hover {
+            background: var(--purple-100);
+            color: var(--purple-800);
+        }
+
+        .month-pill.active {
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+        }
+
+        .calendar-days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .cal-day-header {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            padding: 4px 0;
+        }
+
+        .cal-day-cell {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 8px 6px;
+            min-height: 52px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cal-day-cell:hover {
+            background: var(--purple-50);
+            border-color: var(--purple-300);
+            transform: translateY(-1px);
+        }
+
+        .cal-day-cell.today {
+            border: 2px solid var(--purple-500);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+        }
+
+        .cal-day-cell.selected {
+            background: var(--purple-600);
+            color: #FFFFFF;
+            border-color: var(--purple-700);
+        }
+
+        .cal-day-cell.selected .day-num {
+            color: #FFFFFF;
+        }
+
+        .day-num {
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gray-700);
+        }
+
+        .day-dots-container {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+        }
+
+        .event-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .event-dot.green { background: #10B981; }
+        .event-dot.amber { background: #F59E0B; }
+        .event-dot.purple { background: #9333EA; }
+        .event-dot.red { background: #EF4444; }
+
+        .selected-day-details {
+            background: var(--purple-50);
+            border: 1px solid var(--purple-200);
+            border-radius: var(--radius-md);
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 13.5px;
+        }
+
+        .day-events-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .event-tag {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+        }
+        .event-tag.success { background: #DEF7EC; color: #03543F; }
+        .event-tag.pending { background: #FEF3C7; color: #92400E; }
+        .event-tag.purple { background: var(--purple-100); color: var(--purple-800); }
+
+        .stat-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--purple-200);
+        }
+
+        .stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--gray-900);
+            transition: color 0.3s ease;
+        }
+
+        .stat-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .badge-up {
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        /* ANALYTICS ROW */
+        .analytics-row {
+            display: grid;
+            grid-template-columns: 2fr 1.1fr;
+            gap: 24px;
+        }
+
+        .chart-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .card-title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title-bar h3 {
+            font-size: 17px;
+        }
+
+        .chart-svg-container {
+            width: 100%;
+            height: 180px;
+            position: relative;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .months-labels {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 10px;
+            font-size: 12px;
+            color: var(--gray-400);
+            font-weight: 600;
+        }
+
+        .breakdown-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .breakdown-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        /* INVOICES TABLE CARD */
+        .table-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-subtle);
+            overflow: hidden;
+        }
+
+        .table-toolbar {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .status-filter-tabs {
+            display: flex;
+            gap: 6px;
+            background: var(--gray-100);
+            padding: 4px;
+            border-radius: var(--radius-md);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: #FFFFFF;
+            color: var(--purple-700);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: var(--gray-50);
+            padding: 14px 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 14px;
+            color: var(--gray-800);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: var(--purple-50);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-paid {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .badge-pending {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+        }
+
+        .invoice-status-select {
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-full);
+            padding: 5px 9px;
+            background: #FFFFFF;
+            color: var(--gray-700);
+            font: inherit;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .invoice-status-select:focus {
+            outline: 2px solid var(--purple-200);
+            border-color: var(--purple-500);
+        }
+
+        .invoice-actions {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .invoice-actions-trigger {
+            width: 34px;
+            height: 30px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            background: #FFFFFF;
+            color: var(--gray-600);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .invoice-actions-menu,
+        .invoice-status-submenu {
+            position: absolute;
+            right: 0;
+            z-index: 20;
+            min-width: 190px;
+            padding: 7px;
+            background: #FFFFFF;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+            display: none;
+            text-align: left;
+        }
+
+        .invoice-actions-menu.open,
+        .invoice-status-submenu.open { display: block; }
+
+        .invoice-actions-menu { top: calc(100% + 6px); }
+
+        .invoice-actions-menu button {
+            width: 100%;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--gray-800);
+            padding: 9px 10px;
+            text-align: left;
+            font: inherit;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .invoice-actions-menu button:hover { background: var(--purple-50); color: var(--purple-700); }
+        .invoice-actions-menu .danger { color: var(--error); }
+        .invoice-status-submenu { top: 72px; right: calc(100% - 8px); }
+
+        .badge-overdue {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .client-meta {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .client-name-bold {
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .client-sub {
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+
+        .action-icon-btn {
+            background: none;
+            border: 1px solid var(--gray-200);
+            padding: 6px 10px;
+            border-radius: 6px;
+            color: var(--gray-600);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .action-icon-btn:hover {
+            background: #FFFFFF;
+            border-color: var(--purple-500);
+            color: var(--purple-700);
+        }
+
+        /* MODAL NOUVELLE FACTURE RAPIDE */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #FFFFFF;
+            width: 100%;
+            max-width: 680px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: var(--radius-xl);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 32px;
+            position: relative;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.96) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: var(--gray-100);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gray-700);
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--purple-600);
+        }
+
+        .invoice-summary-box {
+            background: var(--purple-50);
+            padding: 18px;
+            border-radius: var(--radius-md);
+            margin-top: 20px;
+            border: 1px solid var(--purple-200);
+        }
+
+        /* TOAST NOTIFICATION */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: var(--gray-900);
+            color: white;
+            padding: 14px 22px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 1024px) {
+            .analytics-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-wrapper {
+                margin-left: 0;
+            }
+            .mobile-toggle {
+                display: block;
+            }
+            .search-box {
+                width: 200px;
+            }
+            .content-container {
+                padding: 18px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== SIDEBAR ====== -->
+    <aside class="sidebar" id="sidebar">
+        <a href="index.html" class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            </div>
+            <div>
+                <span class="brand-text">izi Facturation</span>
+                <span class="brand-badge">Lyon</span>
+            </div>
+        </a>
+
+        <div class="sidebar-nav">
+            <span class="nav-label">Menu Principal</span>
+            <a href="dashboard.html" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Tableau de bord
+            </a>
+            <a href="devis.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Factures & Devis
+            </a>
+            <a href="clients.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Répertoire Clients
+            </a>
+            <a href="transactions-tva.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Transactions & TVA
+            </a>
+
+            <span class="nav-label" style="margin-top:16px;">Comptabilité & Exports</span>
+            <a href="export-fec.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>
+                Export FEC Expert
+            </a>
+            <a href="parametres.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.8 1.8-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V22h-2.55v-.1a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-1.8-1.8.06-.06A1.7 1.7 0 0 0 8.1 15a1.7 1.7 0 0 0-1.56-1.03H6.4v-2.55h.14A1.7 1.7 0 0 0 8.1 10a1.7 1.7 0 0 0-.34-1.88L7.7 8.06l1.8-1.8.06.06A1.7 1.7 0 0 0 11.44 6a1.7 1.7 0 0 0 1.03-1.56V4h2.55v.44A1.7 1.7 0 0 0 16.05 6a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.8 1.8-.06.06A1.7 1.7 0 0 0 19.4 10a1.7 1.7 0 0 0 1.56 1.03H21v2.55h-.04A1.7 1.7 0 0 0 19.4 15z"></path></svg>
+                Paramètres
+            </a>
+            <a href="index.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                Retour au Site
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar">IF</div>
+                <div>
+                    <div class="user-name">Mon Entreprise</div>
+                    <div class="user-role">Lyon • Plan Pro</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ====== MAIN WORKSPACE ====== -->
+    <div class="main-wrapper">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-toggle" id="menu-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="filter-search" placeholder="Rechercher client, N° facture..." onkeyup="filterTable()">
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <div class="notification-btn" onclick="showToast('Vos relances et échéances Factur-X sont à jour.');">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <div class="notification-dot"></div>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="openInvoiceModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Créer une facture
+                </button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD BODY -->
+        <main class="content-container">
+            <div class="dashboard-header">
+                <div>
+                    <h1>Tableau de bord — Métropole de Lyon</h1>
+                    <p>Gestion en temps réel • Conforme Réforme Factur-X 2026</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <!-- FILTRE DE DATE INTERACTIF & ULTRA-LISIBLE -->
+                    <div class="period-selector-wrapper">
+                        <select class="period-select-custom" id="period-dropdown" onchange="changePeriod(this.value)">
+                            <option value="SEPT_2026" selected>📅 Ce mois-ci (Septembre 2026)</option>
+                            <option value="AOUT_2026">📅 Mois dernier (Août 2026)</option>
+                            <option value="JUIL_2026">📅 Juillet 2026</option>
+                            <option value="T3_2026">📊 3ème Trimestre 2026 (T3)</option>
+                            <option value="YEAR_2026">📈 Année 2026 Complète</option>
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="openInvoiceModal()">
+                        Créer une facture
+                    </button>
+                </div>
+            </div>
+
+            <!-- CALENDRIER DE FACTURATION & ÉCHÉANCIER VISIBLE -->
+            <div class="calendar-widget-card" id="full-calendar-panel">
+                <div class="cal-header-bar">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="cal-icon-badge">📅</div>
+                        <div>
+                            <h3 style="font-size:16px;">Calendrier d'Activité & Échéancier de Facturation</h3>
+                            <p style="font-size:12.5px; color:var(--gray-500);">Visualisez toutes les dates d'émission, échéances clients et encaissements du mois</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="cal-nav-btn" onclick="prevMonth()">‹ Mois Précédent</button>
+                        <span class="cal-month-current" id="current-month-display">Septembre 2026</span>
+                        <button class="cal-nav-btn" onclick="nextMonth()">Mois Suivant ›</button>
+                    </div>
+                </div>
+
+                <!-- MOIS RAPIDES -->
+                <div class="months-strip" id="months-strip">
+                    <button class="month-pill" onclick="selectCalendarMonth(0, this)">Janvier</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(1, this)">Février</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(2, this)">Mars</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(3, this)">Avril</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(4, this)">Mai</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(5, this)">Juin</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(6, this)">Juillet</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(7, this)">Août</button>
+                    <button class="month-pill active" onclick="selectCalendarMonth(8, this)">Septembre 2026 ⭐</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(9, this)">Octobre</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(10, this)">Novembre</button>
+                    <button class="month-pill" onclick="selectCalendarMonth(11, this)">Décembre</button>
+                </div>
+
+                <!-- GRILLE DES JOURS DU MOIS -->
+                <div class="calendar-days-grid" id="calendar-grid">
+                    <!-- Populated in JS -->
+                </div>
+
+                <!-- DÉTAILS DE LA DATE SÉLECTIONNÉE -->
+                <div class="selected-day-details" id="selected-day-box">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="color:var(--purple-700); font-size:16px;">●</span>
+                        <strong id="selected-date-title" style="color:var(--purple-950);">Samedi 5 Septembre 2026 (Aujourd'hui)</strong>
+                    </div>
+                    <div class="day-events-list" id="selected-date-events">
+                        <span class="event-tag success">✓ 1 420 € Encaissé (Bouchon Le Garet)</span>
+                        <span class="event-tag pending">⏳ Échéances en cours (Confluence, BTP)</span>
+                        <span class="event-tag purple">⭐ Déclaration CA3 Prête</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI STATS CARDS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-top">
+                        <span class="stat-label">Chiffre d'Affaires Encaissé</span>
+                        <div class="stat-icon" style="background:#DEF7EC; color:#03543F;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="kpi-ca">28 450,00 €</div>
+                    <div class="stat-footer">
+                        <span class="badge-up" id="kpi-ca-trend">↑ +14.8%</span>
+                        <span style="color:var(--gray-400);" id="kpi-ca-sub">vs mois précédent</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-top">
+                        <span class="stat-label">Factures en Attente</span>
+                        <div class="stat-icon" style="background:#FEF3C7; color:#92400E;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="kpi-pending">7 320,00 €</div>
+                    <div class="stat-footer">
+                        <span style="color:var(--gray-600); font-weight:700;" id="kpi-pending-count">4 factures</span>
+                        <span style="color:var(--gray-400);">• Relances programmées</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-top">
+                        <span class="stat-label">Retards de Paiement</span>
+                        <div class="stat-icon" style="background:#FEE2E2; color:#991B1B;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="kpi-overdue" style="color:var(--error);">1 450,00 €</div>
+                    <div class="stat-footer">
+                        <button class="action-icon-btn" onclick="showToast('Relances automatiques envoyées par email aux clients en retard !');">
+                            ⚡ Relancer tout
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-top">
+                        <span class="stat-label">TVA Collectée (20% & 10%)</span>
+                        <div class="stat-icon" style="background:var(--purple-100); color:var(--purple-700);">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="kpi-tva" style="color:var(--purple-900);">5 690,00 €</div>
+                    <div class="stat-footer">
+                        <a href="transactions-tva.html" style="color:var(--purple-700); font-weight:700; text-decoration:none;">Voir déclaration CA3 →</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS ROW -->
+            <div class="analytics-row">
+                <div class="chart-card">
+                    <div class="card-title-bar">
+                        <div>
+                            <h3 id="chart-title">Évolution du Chiffre d'Affaires 2026 (€)</h3>
+                            <p style="font-size:12.5px; color:var(--gray-400);">Moyenne mensuelle : 24 100 €</p>
+                        </div>
+                        <span style="font-size:12px; font-weight:700; color:var(--purple-700); background:var(--purple-50); padding:4px 10px; border-radius:var(--radius-full);">
+                            +28% en 2026
+                        </span>
+                    </div>
+
+                    <!-- SVG Chart Graphic -->
+                    <div class="chart-svg-container">
+                        <svg class="chart-svg" viewBox="0 0 600 160" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="grad-area" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#9333EA" stop-opacity="0.35"/>
+                                    <stop offset="100%" stop-color="#9333EA" stop-opacity="0.0"/>
+                                </linearGradient>
+                            </defs>
+                            <line x1="0" y1="40" x2="600" y2="40" stroke="#F1F5F9" stroke-width="1"/>
+                            <line x1="0" y1="80" x2="600" y2="80" stroke="#F1F5F9" stroke-width="1"/>
+                            <line x1="0" y1="120" x2="600" y2="120" stroke="#F1F5F9" stroke-width="1"/>
+
+                            <path d="M0 130 Q100 110 200 90 T400 60 T600 20 L600 160 L0 160 Z" fill="url(#grad-area)"/>
+                            <path d="M0 130 Q100 110 200 90 T400 60 T600 20" fill="none" stroke="#7C3AED" stroke-width="3.5" stroke-linecap="round"/>
+
+                            <circle cx="200" cy="90" r="5" fill="#7C3AED" stroke="#FFFFFF" stroke-width="2"/>
+                            <circle cx="400" cy="60" r="5" fill="#7C3AED" stroke="#FFFFFF" stroke-width="2"/>
+                            <circle cx="600" cy="20" r="6" fill="#9333EA" stroke="#FFFFFF" stroke-width="2.5"/>
+                        </svg>
+                    </div>
+                    <div class="months-labels">
+                        <span>Avr</span><span>Mai</span><span>Juin</span><span>Juil</span><span>Août</span><span style="color:var(--purple-700); font-weight:800;">Sept (28.4k€)</span>
+                    </div>
+                </div>
+
+                <!-- Breakdown card -->
+                <div class="breakdown-card">
+                    <div class="card-title-bar">
+                        <h3>Répartition Clients Lyon</h3>
+                        <span style="font-size:12px; color:var(--gray-400);">Septembre</span>
+                    </div>
+                    <div>
+                        <div class="breakdown-item">
+                            <div><span class="breakdown-dot" style="background:#7C3AED;"></span>Agences & Startups (Confluence)</div>
+                            <span class="mono font-bold">45%</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <div><span class="breakdown-dot" style="background:#10B981;"></span>Artisans & BTP (Caluire/Villeurb.)</div>
+                            <span class="mono font-bold">30%</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <div><span class="breakdown-dot" style="background:#F59E0B;"></span>Commerces & Bouchons (Presqu'île)</div>
+                            <span class="mono font-bold">25%</span>
+                        </div>
+                    </div>
+                    <a href="transactions-tva.html" class="btn btn-outline" style="width:100%; margin-top:16px; text-align:center;">
+                        📊 Consulter le Journal Financier & TVA
+                    </a>
+                </div>
+            </div>
+
+            <!-- INVOICES TABLE -->
+            <div class="table-card" id="factures-table">
+                <div class="table-toolbar">
+                    <div>
+                        <h3>Suivi des Factures Récentes</h3>
+                        <p style="font-size:12.5px; color:var(--gray-400);">Norme Factur-X & Mentions Légales françaises</p>
+                    </div>
+
+                    <div class="status-filter-tabs">
+                        <button class="tab-btn active" onclick="filterStatus('ALL', this)">Toutes (6)</button>
+                        <button class="tab-btn" onclick="filterStatus('PAYEE', this)">Payées (3)</button>
+                        <button class="tab-btn" onclick="filterStatus('ATTENTE', this)">En attente (2)</button>
+                        <button class="tab-btn" onclick="filterStatus('RETARD', this)">En retard (1)</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="invoices-list">
+                        <thead>
+                            <tr>
+                                <th>N° Facture</th>
+                                <th>Client & Siège</th>
+                                <th>Date d'émission</th>
+                                <th>Échéance</th>
+                                <th>Montant HT</th>
+                                <th>Total TTC</th>
+                                <th>Statut</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Ligne 1 -->
+                            <tr data-status="PAYEE">
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-098</td>
+                                <td>
+                                    <div class="client-meta">
+                                        <span class="client-name-bold">Bouchon Le Garet</span>
+                                        <span class="client-sub">Lyon 1er (Presqu'île)</span>
+                                    </div>
+                                </td>
+                                <td>01/09/2026</td>
+                                <td>15/09/2026</td>
+                                <td class="mono">1 183,33 €</td>
+                                <td class="mono font-bold">1 420,00 €</td>
+                                <td><span class="badge badge-paid">● Payée (CB)</span></td>
+                                <td style="text-align:right;">
+                                    <button class="action-icon-btn" onclick="showToast('Facture #FAC-2026-098 (PDF Factur-X) téléchargée !');">PDF</button>
+                                </td>
+                            </tr>
+
+                            <!-- Ligne 2 -->
+                            <tr data-status="ATTENTE">
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-097</td>
+                                <td>
+                                    <div class="client-meta">
+                                        <span class="client-name-bold">Agence Confluence Digital</span>
+                                        <span class="client-sub">Lyon 2ème (Quai Rambaud)</span>
+                                    </div>
+                                </td>
+                                <td>28/08/2026</td>
+                                <td>12/09/2026</td>
+                                <td class="mono">3 208,33 €</td>
+                                <td class="mono font-bold">3 850,00 €</td>
+                                <td><span class="badge badge-pending">● En attente (J-7)</span></td>
+                                <td style="text-align:right;">
+                                    <button class="action-icon-btn" onclick="showToast('Lien de paiement renvoyé par email à Confluence Digital');">Relancer</button>
+                                </td>
+                            </tr>
+
+                            <!-- Ligne 3 -->
+                            <tr data-status="PAYEE">
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-096</td>
+                                <td>
+                                    <div class="client-meta">
+                                        <span class="client-name-bold">Rhône Rénovation BTP</span>
+                                        <span class="client-sub">Villeurbanne / Lyon 6e</span>
+                                    </div>
+                                </td>
+                                <td>20/08/2026</td>
+                                <td>05/09/2026</td>
+                                <td class="mono">5 166,67 €</td>
+                                <td class="mono font-bold">6 200,00 €</td>
+                                <td><span class="badge badge-paid">● Payée (Virement)</span></td>
+                                <td style="text-align:right;">
+                                    <button class="action-icon-btn" onclick="showToast('Téléchargement du reçu acquitté...');">PDF</button>
+                                </td>
+                            </tr>
+
+                            <!-- Ligne 4 -->
+                            <tr data-status="RETARD">
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-095</td>
+                                <td>
+                                    <div class="client-meta">
+                                        <span class="client-name-bold">Café des Canuts</span>
+                                        <span class="client-sub">Lyon 4ème (Croix-Rousse)</span>
+                                    </div>
+                                </td>
+                                <td>10/08/2026</td>
+                                <td>25/08/2026</td>
+                                <td class="mono">1 208,33 €</td>
+                                <td class="mono font-bold">1 450,00 €</td>
+                                <td><span class="badge badge-overdue">● En retard (+10j)</span></td>
+                                <td style="text-align:right;">
+                                    <button class="action-icon-btn" style="border-color:var(--error); color:var(--error);" onclick="showToast('Mise en demeure automatique avec pénalités de retard envoyée.');">⚡ Relance</button>
+                                </td>
+                            </tr>
+
+                            <!-- Ligne 5 -->
+                            <tr data-status="PAYEE">
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-094</td>
+                                <td>
+                                    <div class="client-meta">
+                                        <span class="client-name-bold">Tech Lyon Part-Dieu SAS</span>
+                                        <span class="client-sub">Lyon 3ème (Boulevard Vivier Merle)</span>
+                                    </div>
+                                </td>
+                                <td>05/08/2026</td>
+                                <td>20/08/2026</td>
+                                <td class="mono">8 500,00 €</td>
+                                <td class="mono font-bold">10 200,00 €</td>
+                                <td><span class="badge badge-paid">● Payée</span></td>
+                                <td style="text-align:right;">
+                                    <button class="action-icon-btn" onclick="showToast('PDF Factur-X archivé.');">PDF</button>
+                                </td>
+                            </tr>
+
+                            <!-- Ligne 6 -->
+                            <tr data-status="ATTENTE">
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-093</td>
+                                <td>
+                                    <div class="client-meta">
+                                        <span class="client-name-bold">Cabinet Meunier Avocats</span>
+                                        <span class="client-sub">Lyon 6ème (Foch)</span>
+                                    </div>
+                                </td>
+                                <td>02/08/2026</td>
+                                <td>17/09/2026</td>
+                                <td class="mono">2 891,67 €</td>
+                                <td class="mono font-bold">3 470,00 €</td>
+                                <td><span class="badge badge-pending">● En attente</span></td>
+                                <td style="text-align:right;">
+                                    <button class="action-icon-btn" onclick="showToast('Rappel automatique programmé à J-3');">Détails</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL NOUVELLE FACTURE RAPIDE -->
+    <div class="modal-overlay" id="invoice-modal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeInvoiceModal()">✕</button>
+            <h2>Créer une Facture Conforme (RCS Lyon)</h2>
+            <p style="font-size:13.5px; color:var(--gray-500); margin-top:4px;">Génération automatique au format Factur-X & calcul de TVA</p>
+
+            <form id="invoice-form" onsubmit="handleCreateInvoice(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Numéro de facture</label>
+                        <input type="text" class="mono" id="form-num" value="FAC-2026-099" readonly style="background:var(--gray-50);">
+                    </div>
+                    <div class="form-group">
+                        <label>Date d'émission</label>
+                        <input type="date" id="form-date" value="2026-09-05" required>
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Client (Nom ou SIRET)</label>
+                        <input type="text" id="form-client" placeholder="Ex: Restaurant Paul Bocuse, Agence Lyon 6e..." required>
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Désignation de la prestation / Article</label>
+                        <input type="text" id="form-desc" placeholder="Ex: Développement web, Mission conseil, Prestation BTP..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Montant HT (€)</label>
+                        <input type="number" step="0.01" id="form-amount" placeholder="1000.00" oninput="calculateModalTTC()" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Taux de TVA</label>
+                        <select id="form-tva" onchange="calculateModalTTC()">
+                            <option value="0.20">TVA 20% (Taux normal)</option>
+                            <option value="0.10">TVA 10% (Restauration / Rénovation)</option>
+                            <option value="0.055">TVA 5,5% (Taux réduit)</option>
+                            <option value="0">TVA 0% (Franchise art. 293 B / Export)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="invoice-summary-box">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span>Montant HT :</span>
+                        <span class="mono font-bold" id="summary-ht">0,00 €</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span>Montant TVA :</span>
+                        <span class="mono" id="summary-tva">0,00 €</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-weight:800; font-size:16px; color:var(--purple-900); padding-top:8px; border-top:1px solid var(--purple-200);">
+                        <span>Total TTC à payer :</span>
+                        <span class="mono" id="summary-ttc">0,00 €</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+                    <a href="devis.html" class="btn btn-outline">Créer une facture complète</a>
+                    <button type="submit" class="btn btn-primary">Générer & Envoyer la Facture</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast" id="toast-notification">
+        <span id="toast-message">Notification</span>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // Toggle mobile sidebar
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        if (menuBtn) {
+            menuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+            });
+        }
+
+        // ==========================================
+        // CALENDAR INTERACTIVITY & EVENTS LOGIC
+        // ==========================================
+        const monthsList = [
+            { name: "Janvier 2026", days: 31, code: "JANV_2026" },
+            { name: "Février 2026", days: 28, code: "FEV_2026" },
+            { name: "Mars 2026", days: 31, code: "MARS_2026" },
+            { name: "Avril 2026", days: 30, code: "AVR_2026" },
+            { name: "Mai 2026", days: 31, code: "MAI_2026" },
+            { name: "Juin 2026", days: 30, code: "JUIN_2026" },
+            { name: "Juillet 2026", days: 31, code: "JUIL_2026" },
+            { name: "Août 2026", days: 31, code: "AOUT_2026" },
+            { name: "Septembre 2026", days: 30, code: "SEPT_2026" },
+            { name: "Octobre 2026", days: 31, code: "OCT_2026" },
+            { name: "Novembre 2026", days: 30, code: "NOV_2026" },
+            { name: "Décembre 2026", days: 31, code: "DEC_2026" }
+        ];
+
+        let currentMonthIdx = 8; // Septembre 2026
+        let selectedDay = 5;
+
+        // Custom events dictionary by month and day
+        const calendarEvents = {
+            8: { // Septembre 2026
+                1: [{ type: "green", text: "✓ 1 420 € Encaissé (Bouchon Le Garet)" }],
+                5: [
+                    { type: "purple", text: "⭐ Aujourd'hui - 18 450 € Facturés" },
+                    { type: "success", text: "✓ Factur-X & Chorus Pro Synchro" },
+                    { type: "purple", text: "⭐ Déclaration CA3 Prête" }
+                ],
+                10: [{ type: "red", text: "⚠️ 1 450 € Échéance Dépassée (Confluence Media)" }],
+                12: [{ type: "amber", text: "⏳ 3 850 € Échéance Facture (Rhône BTP)" }],
+                15: [{ type: "purple", text: "📄 Déclaration TVA CA3 mensuelle" }],
+                20: [{ type: "green", text: "✓ 6 200 € Prévu Encaissement (TechLyon SAS)" }],
+                25: [{ type: "amber", text: "⏳ 2 100 € Échéance Facture (Grand Hôtel Lyon)" }],
+                28: [{ type: "purple", text: "🧾 Émission Factures Récurrentes Septembre" }]
+            },
+            7: { // Août 2026
+                1: [{ type: "green", text: "✓ 3 100 € Encaissé" }],
+                15: [{ type: "purple", text: "✓ Déclaration TVA validée" }],
+                31: [{ type: "green", text: "✓ 24 780 € Total Clôturé Août" }]
+            },
+            9: { // Octobre 2026
+                1: [{ type: "purple", text: "🧾 Facturation Trimestre T4 lancée" }],
+                15: [{ type: "amber", text: "⏳ Échéances clients T4" }],
+                31: [{ type: "purple", text: "📊 Clôture mensuelle Octobre" }]
+            }
+        };
+
+        const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const display = document.getElementById('current-month-display');
+            if (!grid) return;
+
+            display.textContent = monthsList[currentMonthIdx].name;
+
+            // Day headers
+            let html = `
+                <div class="cal-day-header">Lun</div>
+                <div class="cal-day-header">Mar</div>
+                <div class="cal-day-header">Mer</div>
+                <div class="cal-day-header">Jeu</div>
+                <div class="cal-day-header">Ven</div>
+                <div class="cal-day-header">Sam</div>
+                <div class="cal-day-header">Dim</div>
+            `;
+
+            // Calculate starting day of the week (Monday = 0, Sunday = 6)
+            const firstDate = new Date(2026, currentMonthIdx, 1);
+            let startDay = firstDate.getDay() - 1;
+            if (startDay === -1) startDay = 6;
+
+            const totalDays = monthsList[currentMonthIdx].days;
+
+            // Empty cells before day 1
+            for (let i = 0; i < startDay; i++) {
+                html += `<div class="cal-day-cell" style="opacity: 0.3; background: transparent; cursor: default; border: none;"></div>`;
+            }
+
+            // Days of the month
+            const monthEvts = calendarEvents[currentMonthIdx] || {};
+
+            for (let day = 1; day <= totalDays; day++) {
+                const isToday = (currentMonthIdx === 8 && day === 5);
+                const isSelected = (day === selectedDay);
+                const events = monthEvts[day] || [];
+
+                let dotsHtml = '';
+                if (events.length > 0) {
+                    dotsHtml = `<div class="day-dots-container">` +
+                        events.map(ev => `<span class="event-dot ${ev.type}"></span>`).join('') +
+                        `</div>`;
+                }
+
+                html += `
+                    <div class="cal-day-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="selectDay(${day}, this)">
+                        <div class="day-num">${day < 10 ? '0' + day : day}</div>
+                        ${dotsHtml}
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+            updateSelectedDayBox();
+        }
+
+        function selectDay(day, cellElement) {
+            selectedDay = day;
+            document.querySelectorAll('.cal-day-cell').forEach(c => c.classList.remove('selected'));
+            if (cellElement) cellElement.classList.add('selected');
+            updateSelectedDayBox();
+        }
+
+        function updateSelectedDayBox() {
+            const titleEl = document.getElementById('selected-date-title');
+            const eventsEl = document.getElementById('selected-date-events');
+            if (!titleEl || !eventsEl) return;
+
+            const dateObj = new Date(2026, currentMonthIdx, selectedDay);
+            const dayName = dayNames[dateObj.getDay()];
+            const isToday = (currentMonthIdx === 8 && selectedDay === 5);
+
+            titleEl.textContent = `${dayName} ${selectedDay} ${monthsList[currentMonthIdx].name} ${isToday ? "(Aujourd'hui)" : ''}`;
+
+            const monthEvts = calendarEvents[currentMonthIdx] || {};
+            const events = monthEvts[selectedDay];
+
+            if (events && events.length > 0) {
+                eventsEl.innerHTML = events.map(ev => {
+                    let tagClass = ev.type === 'green' ? 'success' : (ev.type === 'amber' || ev.type === 'red' ? 'pending' : 'purple');
+                    return `<span class="event-tag ${tagClass}">${ev.text}</span>`;
+                }).join('');
+            } else {
+                eventsEl.innerHTML = `
+                    <span class="event-tag purple">📅 Aucune échéance critique ce jour</span>
+                    <span class="event-tag success">✓ Activité normale</span>
+                `;
+            }
+        }
+
+        function selectCalendarMonth(idx, btn) {
+            currentMonthIdx = idx;
+            selectedDay = 1;
+            document.querySelectorAll('.month-pill').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            renderCalendar();
+
+            // Link with top period dropdown if matches
+            const dropdown = document.getElementById('period-dropdown');
+            if (dropdown && idx === 8) {
+                dropdown.value = "SEPT_2026";
+                changePeriod('SEPT_2026');
+            } else if (dropdown && idx === 7) {
+                dropdown.value = "AOUT_2026";
+                changePeriod('AOUT_2026');
+            } else if (dropdown && idx === 6) {
+                dropdown.value = "JUIL_2026";
+                changePeriod('JUIL_2026');
+            }
+        }
+
+        function prevMonth() {
+            if (currentMonthIdx > 0) {
+                currentMonthIdx--;
+                updateMonthPills();
+                renderCalendar();
+            }
+        }
+
+        function nextMonth() {
+            if (currentMonthIdx < monthsList.length - 1) {
+                currentMonthIdx++;
+                updateMonthPills();
+                renderCalendar();
+            }
+        }
+
+        function updateMonthPills() {
+            const pills = document.querySelectorAll('.month-pill');
+            pills.forEach((p, index) => {
+                if (index === currentMonthIdx) {
+                    p.classList.add('active');
+                } else {
+                    p.classList.remove('active');
+                }
+            });
+        }
+
+        // Initialize calendar on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCalendar();
+        });
+
+        // Period Dropdown Switcher
+        function changePeriod(period) {
+            const kpiCA = document.getElementById('kpi-ca');
+            const kpiPending = document.getElementById('kpi-pending');
+            const kpiOverdue = document.getElementById('kpi-overdue');
+            const kpiTVA = document.getElementById('kpi-tva');
+            const trend = document.getElementById('kpi-ca-trend');
+            const sub = document.getElementById('kpi-ca-sub');
+            const chartTitle = document.getElementById('chart-title');
+
+            if (period === 'SEPT_2026') {
+                kpiCA.textContent = "28 450,00 €";
+                kpiPending.textContent = "7 320,00 €";
+                kpiOverdue.textContent = "1 450,00 €";
+                kpiTVA.textContent = "5 690,00 €";
+                trend.textContent = "↑ +14.8%";
+                sub.textContent = "vs mois précédent";
+                chartTitle.textContent = "Évolution du Chiffre d'Affaires 2026 (€)";
+                showToast("Période active : Septembre 2026 (En cours)");
+            } else if (period === 'AOUT_2026') {
+                kpiCA.textContent = "24 780,00 €";
+                kpiPending.textContent = "1 850,00 €";
+                kpiOverdue.textContent = "0,00 €";
+                kpiTVA.textContent = "4 956,00 €";
+                trend.textContent = "↑ +8.2%";
+                sub.textContent = "vs Juillet 2026";
+                chartTitle.textContent = "Bilan Clôturé : Août 2026 (€)";
+                showToast("Bilan clôturé d'Août 2026 chargé");
+            } else if (period === 'JUIL_2026') {
+                kpiCA.textContent = "22 900,00 €";
+                kpiPending.textContent = "0,00 €";
+                kpiOverdue.textContent = "0,00 €";
+                kpiTVA.textContent = "4 580,00 €";
+                trend.textContent = "↑ +12.0%";
+                sub.textContent = "vs Juin 2026";
+                chartTitle.textContent = "Bilan Clôturé : Juillet 2026 (€)";
+                showToast("Bilan clôturé de Juillet 2026 chargé");
+            } else if (period === 'T3_2026') {
+                kpiCA.textContent = "76 130,00 €";
+                kpiPending.textContent = "9 170,00 €";
+                kpiOverdue.textContent = "1 450,00 €";
+                kpiTVA.textContent = "15 226,00 €";
+                trend.textContent = "↑ +19.4%";
+                sub.textContent = "vs T2 2026";
+                chartTitle.textContent = "Cumul 3ème Trimestre 2026 (€)";
+                showToast("Données consolidées du T3 2026 chargées");
+            } else if (period === 'YEAR_2026') {
+                kpiCA.textContent = "218 600,00 €";
+                kpiPending.textContent = "9 170,00 €";
+                kpiOverdue.textContent = "1 450,00 €";
+                kpiTVA.textContent = "43 720,00 €";
+                trend.textContent = "↑ +28.5%";
+                sub.textContent = "vs Année 2025";
+                chartTitle.textContent = "Bilan Annuel 2026 Consolidé (€)";
+                showToast("Bilan consolidé de l'année 2026 chargé");
+            }
+        }
+
+        // Filter Table by Status
+        function filterStatus(status, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const rows = document.querySelectorAll('#invoices-list tbody tr');
+            rows.forEach(row => {
+                if (status === 'ALL' || row.dataset.status === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Live Search in Table
+        function filterTable() {
+            const input = document.getElementById('filter-search').value.toLowerCase();
+            const rows = document.querySelectorAll('#invoices-list tbody tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? '' : 'none';
+            });
+        }
+
+        function invoiceActionsMarkup(key) {
+            return `<div class="invoice-actions"><button class="invoice-actions-trigger" aria-label="Actions de la facture" onclick="toggleInvoiceMenu(event, '${key}')">•••</button><div class="invoice-actions-menu" id="actions-${key}"><button onclick="viewInvoiceByKey('${key}')">Voir le détail</button><button onclick="editInvoiceByKey('${key}')">Modifier</button><button onclick="toggleStatusMenu(event, '${key}')">Changer le statut <span style="float:right">›</span></button><div class="invoice-status-submenu" id="status-${key}"><button onclick="changeInvoiceStatus('${key}', 'BROUILLON')">Brouillon</button><button onclick="changeInvoiceStatus('${key}', 'ENVOYEE')">Envoyée</button><button onclick="changeInvoiceStatus('${key}', 'PAYEE')">Payée</button><button onclick="changeInvoiceStatus('${key}', 'RETARD')">En retard</button></div><button class="danger" onclick="deleteInvoice('${key}')">Supprimer</button></div></div>`;
+        }
+
+        function enhanceLegacyInvoiceRows() {
+            document.querySelectorAll('#invoices-list tbody tr:not([data-invoice-id])').forEach((row, index) => {
+                const number = row.cells[0]?.textContent.trim();
+                if (!number || row.dataset.invoiceNumber) return;
+                const key = `legacy-${index}`;
+                row.dataset.invoiceNumber = number;
+                row.dataset.actionKey = key;
+                const statusCell = row.cells[6];
+                const currentStatus = row.dataset.status || 'ATTENTE';
+                statusCell.innerHTML = `<span class="badge invoice-status-badge ${statusBadgeClass(currentStatus)}">● ${statusLabel(currentStatus)}</span>`;
+                row.cells[7].innerHTML = invoiceActionsMarkup(key);
+            });
+        }
+
+        async function loadSavedInvoices() {
+            const invoices = await fetch('/api/invoices').then(response => response.json()).catch(() => []);
+            const tbody = document.querySelector('#invoices-list tbody');
+            invoices.forEach(invoice => {
+                const legacyRow = [...tbody.querySelectorAll('[data-invoice-number]')].find(row => row.dataset.invoiceNumber === invoice.number);
+                if (legacyRow) {
+                    legacyRow.dataset.status = invoice.status;
+                    const badge = legacyRow.querySelector('.invoice-status-badge');
+                    badge.className = `badge invoice-status-badge ${statusBadgeClass(invoice.status)}`;
+                    badge.textContent = `● ${statusLabel(invoice.status)}`;
+                    return;
+                }
+                if (tbody.querySelector(`[data-invoice-id="${invoice.id}"]`)) return;
+                const row = document.createElement('tr');
+                row.dataset.status = invoice.status;
+                row.dataset.invoiceId = invoice.id;
+                row.innerHTML = `<td class="mono font-bold" style="color:var(--purple-700);">${invoice.number}</td><td><div class="client-meta"><span class="client-name-bold">${invoice.client}</span><span class="client-sub">Nouvelle facture</span></div></td><td>${invoice.issueDate}</td><td>${invoice.dueDate || '—'}</td><td class="mono">${invoice.totalHT}</td><td class="mono font-bold">${invoice.totalTTC}</td><td><span class="badge invoice-status-badge ${statusBadgeClass(invoice.status)}">● ${statusLabel(invoice.status)}</span></td><td style="text-align:right;">${invoiceActionsMarkup(invoice.id)}</td>`;
+                tbody.prepend(row);
+            });
+        }
+
+        function statusLabel(status) {
+            return ({ BROUILLON: 'Brouillon', ENVOYEE: 'Envoyée', PAYEE: 'Payée', RETARD: 'En retard', ATTENTE: 'En attente' })[status] || status;
+        }
+
+        function statusBadgeClass(status) {
+            return status === 'PAYEE' ? 'badge-paid' : (status === 'RETARD' ? 'badge-overdue' : 'badge-pending');
+        }
+
+        function toggleInvoiceMenu(event, invoiceId) {
+            event.stopPropagation();
+            document.querySelectorAll('.invoice-actions-menu.open').forEach(menu => menu.classList.remove('open'));
+            document.getElementById(`actions-${invoiceId}`).classList.toggle('open');
+        }
+
+        function toggleStatusMenu(event, invoiceId) {
+            event.stopPropagation();
+            document.getElementById(`status-${invoiceId}`).classList.toggle('open');
+        }
+
+        function viewInvoice(invoiceId) {
+            window.location.href = `devis.html?invoice=${invoiceId}`;
+        }
+
+        function editInvoice(invoiceId) {
+            window.location.href = `devis.html?invoice=${invoiceId}&edit=1`;
+        }
+
+        async function changeInvoiceStatus(invoiceId, status) {
+            const row = document.querySelector(`[data-invoice-id="${invoiceId}"]`) || document.querySelector(`[data-action-key="${invoiceId}"]`);
+            const endpoint = row?.dataset.invoiceId
+                ? `/api/invoices/${invoiceId}/status`
+                : `/api/invoices/by-number/${encodeURIComponent(row.dataset.invoiceNumber)}/status`;
+            const response = await fetch(endpoint, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            if (!response.ok) {
+                showToast('Impossible de mettre à jour le statut.');
+                return;
+            }
+            row.dataset.status = status;
+            const badge = row.querySelector('.invoice-status-badge');
+            badge.className = `badge invoice-status-badge ${statusBadgeClass(status)}`;
+            badge.textContent = `● ${statusLabel(status)}`;
+            document.getElementById(`actions-${invoiceId}`).classList.remove('open');
+            showToast('Statut de la facture mis à jour.');
+        }
+
+        function viewInvoiceByKey(key) {
+            const row = document.querySelector(`[data-action-key="${key}"]`) || document.querySelector(`[data-invoice-id="${key}"]`);
+            if (row?.dataset.invoiceId) viewInvoice(row.dataset.invoiceId);
+            else showToast('Le détail de cette facture sera bientôt disponible.');
+        }
+
+        function editInvoiceByKey(key) {
+            const row = document.querySelector(`[data-action-key="${key}"]`) || document.querySelector(`[data-invoice-id="${key}"]`);
+            if (row?.dataset.invoiceId) editInvoice(row.dataset.invoiceId);
+            else showToast('La modification de cette facture sera bientôt disponible.');
+        }
+
+        function deleteInvoice(invoiceId) {
+            showToast('La suppression sera activée dans la prochaine étape.');
+        }
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.invoice-actions-menu.open, .invoice-status-submenu.open').forEach(menu => menu.classList.remove('open'));
+        });
+
+        // Modal Handlers
+        function openInvoiceModal() {
+            document.getElementById('invoice-modal').classList.add('open');
+            calculateModalTTC();
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoice-modal').classList.remove('open');
+        }
+
+        function calculateModalTTC() {
+            const amountInput = document.getElementById('form-amount').value;
+            const amountHT = parseFloat(amountInput) || 0;
+            const tvaRate = parseFloat(document.getElementById('form-tva').value) || 0;
+
+            const tva = amountHT * tvaRate;
+            const ttc = amountHT + tva;
+
+            document.getElementById('summary-ht').textContent = amountHT.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+            document.getElementById('summary-tva').textContent = tva.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+            document.getElementById('summary-ttc').textContent = ttc.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+        }
+
+        function handleCreateInvoice(e) {
+            e.preventDefault();
+            const client = document.getElementById('form-client').value;
+            const num = document.getElementById('form-num').value;
+            const amountInput = parseFloat(document.getElementById('form-amount').value) || 0;
+            const tvaRate = parseFloat(document.getElementById('form-tva').value) || 0;
+            const ttc = amountInput * (1 + tvaRate);
+
+            const tbody = document.querySelector('#invoices-list tbody');
+            const newRow = document.createElement('tr');
+            newRow.dataset.status = 'ATTENTE';
+            newRow.innerHTML = `
+                <td class="mono font-bold" style="color:var(--purple-700);">${num}</td>
+                <td>
+                    <div class="client-meta">
+                        <span class="client-name-bold">${client}</span>
+                        <span class="client-sub">Lyon (Nouveau client)</span>
+                    </div>
+                </td>
+                <td>05/09/2026</td>
+                <td>20/09/2026</td>
+                <td class="mono">${amountInput.toLocaleString('fr-FR', {minimumFractionDigits:2})} €</td>
+                <td class="mono font-bold">${ttc.toLocaleString('fr-FR', {minimumFractionDigits:2})} €</td>
+                <td><span class="badge badge-pending">● En attente</span></td>
+                <td style="text-align:right;">
+                    <button class="action-icon-btn" onclick="showToast('Facture ${num} envoyée à ${client} !');">Envoyée</button>
+                </td>
+            `;
+            tbody.insertBefore(newRow, tbody.firstChild);
+
+            closeInvoiceModal();
+            showToast(`Facture ${num} créée et enregistrée avec succès pour ${client} !`);
+            document.getElementById('invoice-form').reset();
+        }
+
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            const msg = document.getElementById('toast-message');
+            msg.textContent = message;
+            toast.style.display = 'flex';
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3500);
+        }
+
+        // Auto execute on initial load
+        renderCalendar();
+        enhanceLegacyInvoiceRows();
+        loadSavedInvoices();
+    </script>
+</body>
+</html>

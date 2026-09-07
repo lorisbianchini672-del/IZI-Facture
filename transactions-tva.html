@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions & Déclaration TVA — izi Facturation Lyon</title>
+    <meta name="description" content="Suivi des transactions, encaissements et calcul de la déclaration de TVA (20%, 10%, 5.5%) pour les sociétés lyonnaises.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --purple-50: #FAF5FF;
+            --purple-100: #F3E8FF;
+            --purple-200: #E9D5FF;
+            --purple-300: #D8B4FE;
+            --purple-400: #C084FC;
+            --purple-500: #A855F7;
+            --purple-600: #9333EA;
+            --purple-700: #7C3AED;
+            --purple-800: #6D28D9;
+            --purple-900: #4C1D95;
+
+            --success: #10B981;
+            --success-bg: #DEF7EC;
+            --success-text: #03543F;
+            --warning: #F59E0B;
+            --warning-bg: #FEF3C7;
+            --warning-text: #92400E;
+            --error: #EF4444;
+            --error-bg: #FEE2E2;
+            --error-text: #991B1B;
+
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --gray-900: #0F172A;
+
+            --bg-body: #F8FAFC;
+            --border-card: #E2E8F0;
+            --bg-gradient: linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #6D28D9 100%);
+            --shadow-subtle: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-card: 0 4px 14px rgba(0,0,0,0.04);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14.5px;
+            background: var(--bg-body);
+            color: var(--gray-800);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            color: var(--gray-900);
+            letter-spacing: -0.02em;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: #FFFFFF;
+            border-right: 1px solid var(--border-card);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--gray-100);
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--bg-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-text {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--gray-900);
+        }
+
+        .brand-badge {
+            font-size: 9px;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            padding: 2px 6px;
+            border-radius: var(--radius-full);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav {
+            padding: 20px 14px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gray-400);
+            padding: 8px 12px 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: var(--purple-50);
+            color: var(--purple-700);
+        }
+
+        .nav-item.active {
+            background: var(--purple-50);
+            color: var(--purple-700);
+            font-weight: 700;
+            border-left: 3px solid var(--purple-600);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--gray-100);
+            background: var(--gray-50);
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7C3AED, #A855F7);
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--gray-900);
+        }
+
+        .user-role {
+            font-size: 11.5px;
+            color: var(--gray-500);
+        }
+
+        /* MAIN CONTENT */
+        .main-wrapper {
+            margin-left: 260px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 72px;
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-card);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-outline {
+            background: #FFFFFF;
+            border: 1.5px solid var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .content-container {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        /* TVA OVERVIEW & CA3 BOX */
+        .tva-overview-grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 24px;
+        }
+
+        .card-box {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .tva-rate-breakdown {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .rate-box {
+            padding: 16px;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+        }
+
+        .rate-title {
+            font-size: 12px;
+            color: var(--gray-500);
+            font-weight: 700;
+        }
+
+        .rate-amount {
+            font-family: 'Space Mono', monospace;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-top: 4px;
+        }
+
+        /* CA3 Form Simulation */
+        .ca3-box {
+            background: var(--purple-50);
+            border: 1.5px solid var(--purple-200);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .ca3-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--purple-200);
+            font-size: 13.5px;
+        }
+
+        .ca3-line:last-child {
+            border-bottom: none;
+        }
+
+        .ca3-total {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--purple-900);
+            padding-top: 8px;
+        }
+
+        /* TRANSACTIONS TABLE */
+        .table-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-subtle);
+            overflow: hidden;
+        }
+
+        .table-toolbar {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: var(--gray-50);
+            padding: 14px 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: var(--purple-50);
+        }
+
+        .payment-method-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--gray-600);
+            font-weight: 600;
+            background: var(--gray-100);
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 28px; right: 28px;
+            background: var(--gray-900);
+            color: white;
+            padding: 14px 22px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 2000;
+        }
+
+        @media (max-width: 1024px) {
+            .tva-overview-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; }
+            .content-container { padding: 18px; }
+            .tva-rate-breakdown { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <a href="index.html" class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            </div>
+            <div>
+                <span class="brand-text">izi Facturation</span>
+                <span class="brand-badge">Lyon</span>
+            </div>
+        </a>
+
+        <div class="sidebar-nav">
+            <span class="nav-label">Menu Principal</span>
+            <a href="dashboard.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Tableau de bord
+            </a>
+            <a href="devis.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Factures & Devis
+            </a>
+            <a href="clients.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Répertoire Clients
+            </a>
+            <a href="transactions-tva.html" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Transactions & TVA
+            </a>
+
+            <span class="nav-label" style="margin-top:16px;">Comptabilité & Exports</span>
+            <a href="export-fec.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>
+                Export FEC Expert
+            </a>
+            <a href="index.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                Retour au Site
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar">IF</div>
+                <div>
+                    <div class="user-name">Mon Entreprise</div>
+                    <div class="user-role">Lyon • Plan Pro</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div>
+                <span style="font-size:13px; font-weight:700; color:var(--purple-700); background:var(--purple-50); padding:4px 12px; border-radius:var(--radius-full);">
+                    📅 Période Fiscale : 3ème Trimestre 2026 (En cours)
+                </span>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <button class="btn btn-outline" onclick="showToast('Rapport TVA trimestriel exporté (PDF)');">Télécharger Déclaration CA3</button>
+                <a href="devis.html" class="btn btn-primary">+ Enregistrer Encaissement</a>
+            </div>
+        </header>
+
+        <main class="content-container">
+            <div>
+                <h1>Suivi des Encaissements & Déclaration de TVA</h1>
+                <p style="color:var(--gray-500); margin-top:2px;">Calcul automatique des TVA collectées selon les taux de la législation fiscale française</p>
+            </div>
+
+            <!-- OVERVIEW & CA3 PRE-FILLED -->
+            <div class="tva-overview-grid">
+                <div class="card-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>Ventilation de la TVA Collectée par Taux</h3>
+                        <span style="font-size:12px; color:var(--gray-400);">Septembre 2026</span>
+                    </div>
+
+                    <div class="tva-rate-breakdown">
+                        <div class="rate-box">
+                            <div class="rate-title">Taux Normal (20%)</div>
+                            <div class="rate-amount">4 690,00 €</div>
+                            <div style="font-size:11.5px; color:var(--gray-500); margin-top:4px;">Sur 23 450 € HT (Services/Prestations)</div>
+                        </div>
+
+                        <div class="rate-box">
+                            <div class="rate-title">Taux Intermédiaire (10%)</div>
+                            <div class="rate-amount">820,00 €</div>
+                            <div style="font-size:11.5px; color:var(--gray-500); margin-top:4px;">Sur 8 200 € HT (Restauration / BTP)</div>
+                        </div>
+
+                        <div class="rate-box">
+                            <div class="rate-title">Taux Réduit (5,5%)</div>
+                            <div class="rate-amount">180,00 €</div>
+                            <div style="font-size:11.5px; color:var(--gray-500); margin-top:4px;">Sur 3 272 € HT (Livres / Énergie)</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:20px; padding:14px; background:var(--gray-50); border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span style="font-weight:700; color:var(--gray-900);">Total TVA Brute Collectée :</span>
+                            <span style="color:var(--gray-500); font-size:13px;"> Base imposable : 34 922,00 € HT</span>
+                        </div>
+                        <span class="mono font-bold" style="font-size:18px; color:var(--purple-900);">5 690,00 €</span>
+                    </div>
+                </div>
+
+                <!-- CA3 PRE-FILLED BOX -->
+                <div class="ca3-box">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <span style="font-weight:800; font-size:15px; color:var(--purple-900);">Synthèse Déclaration CA3</span>
+                            <span style="font-size:11px; background:#DEF7EC; color:#03543F; padding:2px 8px; border-radius:var(--radius-full); font-weight:700;">Prêt SIE Lyon</span>
+                        </div>
+                        <div class="ca3-line">
+                            <span style="color:var(--gray-600);">Ligne 01 - Chiffre d'Affaires HT :</span>
+                            <span class="mono font-bold">34 922 €</span>
+                        </div>
+                        <div class="ca3-line">
+                            <span style="color:var(--gray-600);">Ligne 08 - TVA Brute due :</span>
+                            <span class="mono font-bold">5 690 €</span>
+                        </div>
+                        <div class="ca3-line">
+                            <span style="color:var(--gray-600);">Ligne 20 - TVA Déductible sur achats :</span>
+                            <span class="mono" style="color:var(--success);">- 1 240 €</span>
+                        </div>
+                    </div>
+
+                    <div class="ca3-line ca3-total">
+                        <span>Ligne 28 - TVA Nette à Payer :</span>
+                        <span class="mono">4 450,00 €</span>
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top:14px; width:100%;" onclick="showToast('Téléversement vers votre espace impot.gouv.fr / expert-comptable prêt !');">
+                        Transmettre à l'Expert-Comptable
+                    </button>
+                </div>
+            </div>
+
+            <!-- TRANSACTIONS LOG TABLE -->
+            <div class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <h3>Journal des Encaissements Récents</h3>
+                        <p style="font-size:12.5px; color:var(--gray-400);">Réconciliation bancaire avec relevés SEPA</p>
+                    </div>
+                    <button class="btn btn-outline" style="padding:6px 14px; font-size:13px;" onclick="showToast('Journal des règlements exporté au format CSV');">
+                        Exporter Journal (CSV)
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date Réception</th>
+                                <th>Réf. Facture</th>
+                                <th>Émetteur (Client Lyon)</th>
+                                <th>Moyen de Règlement</th>
+                                <th>Montant HT</th>
+                                <th>Taux TVA</th>
+                                <th>Montant TTC Encaissé</th>
+                                <th style="text-align:right;">Reçu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>01/09/2026</td>
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-098</td>
+                                <td><strong>Bouchon Le Garet</strong> (Lyon 1er)</td>
+                                <td><span class="payment-method-pill">💳 Carte Bancaire (Stripe)</span></td>
+                                <td class="mono">1 183,33 €</td>
+                                <td class="mono">20%</td>
+                                <td class="mono font-bold" style="color:var(--success);">+ 1 420,00 €</td>
+                                <td style="text-align:right;">
+                                    <button class="btn btn-outline" style="padding:4px 8px; font-size:11px;" onclick="showToast('Reçu de paiement téléchargé');">Reçu</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>20/08/2026</td>
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-096</td>
+                                <td><strong>Rhône Rénovation BTP</strong> (Villeurbanne)</td>
+                                <td><span class="payment-method-pill">🏦 Virement SEPA Direct</span></td>
+                                <td class="mono">5 166,67 €</td>
+                                <td class="mono">20%</td>
+                                <td class="mono font-bold" style="color:var(--success);">+ 6 200,00 €</td>
+                                <td style="text-align:right;">
+                                    <button class="btn btn-outline" style="padding:4px 8px; font-size:11px;" onclick="showToast('Reçu de paiement téléchargé');">Reçu</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>05/08/2026</td>
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-094</td>
+                                <td><strong>Tech Lyon Part-Dieu SAS</strong> (Lyon 3e)</td>
+                                <td><span class="payment-method-pill">🏦 Virement SEPA Direct</span></td>
+                                <td class="mono">8 500,00 €</td>
+                                <td class="mono">20%</td>
+                                <td class="mono font-bold" style="color:var(--success);">+ 10 200,00 €</td>
+                                <td style="text-align:right;">
+                                    <button class="btn btn-outline" style="padding:4px 8px; font-size:11px;" onclick="showToast('Reçu de paiement téléchargé');">Reçu</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>28/07/2026</td>
+                                <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-091</td>
+                                <td><strong>Studio Lumina</strong> (Lyon 2e)</td>
+                                <td><span class="payment-method-pill">💳 Carte Bancaire</span></td>
+                                <td class="mono">2 400,00 €</td>
+                                <td class="mono">20%</td>
+                                <td class="mono font-bold" style="color:var(--success);">+ 2 880,00 €</td>
+                                <td style="text-align:right;">
+                                    <button class="btn btn-outline" style="padding:4px 8px; font-size:11px;" onclick="showToast('Reçu de paiement téléchargé');">Reçu</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast">Notification</div>
+
+    <script>
+        let tTimeout;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'flex';
+            clearTimeout(tTimeout);
+            tTimeout = setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+    </script>
+</body>
+</html>
+

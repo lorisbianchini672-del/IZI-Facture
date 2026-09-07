@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Création Devis & Facture — izi Facturation Lyon</title>
+    <meta name="description" content="Éditeur interactif de factures et devis conformes Factur-X 2026 avec prévisualisation en direct et calcul de TVA automatique.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --purple-50: #FAF5FF;
+            --purple-100: #F3E8FF;
+            --purple-200: #E9D5FF;
+            --purple-300: #D8B4FE;
+            --purple-400: #C084FC;
+            --purple-500: #A855F7;
+            --purple-600: #9333EA;
+            --purple-700: #7C3AED;
+            --purple-800: #6D28D9;
+            --purple-900: #4C1D95;
+
+            --success: #10B981;
+            --success-bg: #DEF7EC;
+            --success-text: #03543F;
+            --warning: #F59E0B;
+            --error: #EF4444;
+
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --gray-900: #0F172A;
+
+            --bg-body: #F8FAFC;
+            --border-card: #E2E8F0;
+            --bg-gradient: linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #6D28D9 100%);
+            --shadow-subtle: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-card: 0 10px 25px -4px rgba(0,0,0,0.08);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14px;
+            background: var(--bg-body);
+            color: var(--gray-800);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            color: var(--gray-900);
+            letter-spacing: -0.02em;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: #FFFFFF;
+            border-right: 1px solid var(--border-card);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--gray-100);
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--bg-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-text {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--gray-900);
+        }
+
+        .brand-badge {
+            font-size: 9px;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            padding: 2px 6px;
+            border-radius: var(--radius-full);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav {
+            padding: 20px 14px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gray-400);
+            padding: 8px 12px 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: var(--purple-50);
+            color: var(--purple-700);
+        }
+
+        .nav-item.active {
+            background: var(--purple-50);
+            color: var(--purple-700);
+            font-weight: 700;
+            border-left: 3px solid var(--purple-600);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--gray-100);
+            background: var(--gray-50);
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7C3AED, #A855F7);
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--gray-900);
+        }
+
+        .user-role {
+            font-size: 11.5px;
+            color: var(--gray-500);
+        }
+
+        /* MAIN */
+        .main-wrapper {
+            margin-left: 260px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 72px;
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-card);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13.5px;
+            font-weight: 700;
+            padding: 9px 18px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.45);
+        }
+
+        .btn-outline {
+            background: #FFFFFF;
+            border: 1.5px solid var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+        }
+
+        /* SPLIT VIEW WORKSPACE */
+        .editor-workspace {
+            padding: 24px 32px;
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        .editor-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-xl);
+            padding: 28px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .doc-type-toggle {
+            display: flex;
+            background: var(--gray-100);
+            padding: 4px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+        }
+
+        .type-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gray-600);
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+        }
+
+        .type-btn.active {
+            background: #FFFFFF;
+            color: var(--purple-700);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        .form-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 20px 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full { grid-column: 1 / -1; }
+
+        .form-group label {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--gray-700);
+        }
+
+        .form-group input, .form-group select {
+            padding: 9px 12px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 13.5px;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--purple-600);
+        }
+
+        /* ITEMS TABLE IN EDITOR */
+        .items-table-editor {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .items-table-editor th {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            text-align: left;
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .items-table-editor td {
+            padding: 8px 6px;
+            vertical-align: middle;
+        }
+
+        .items-table-editor input, .items-table-editor select {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .delete-row-btn {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .delete-row-btn:hover { color: var(--error); }
+
+        /* LIVE INVOICE PREVIEW (RIGHT COLUMN) */
+        .preview-pane-wrapper {
+            position: sticky;
+            top: 96px;
+        }
+
+        .invoice-paper {
+            background: #FFFFFF;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-lg);
+            padding: 36px;
+            box-shadow: 0 15px 35px -5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .paper-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--purple-100);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+
+        .doc-watermark-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--purple-900);
+        }
+
+        .paper-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+            font-size: 13px;
+        }
+
+        .paper-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+
+        .paper-table th {
+            background: var(--purple-50);
+            color: var(--purple-900);
+            padding: 8px 10px;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--purple-200);
+        }
+
+        .paper-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 13px;
+        }
+
+        .paper-totals {
+            margin-left: auto;
+            width: 240px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+
+        .total-row.final {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--purple-900);
+            border-top: 2px solid var(--purple-600);
+            padding-top: 8px;
+            margin-top: 4px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 28px; right: 28px;
+            background: var(--gray-900);
+            color: white;
+            padding: 14px 22px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 2000;
+        }
+
+        @media (max-width: 1024px) {
+            .editor-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body {
+                background: #FFFFFF;
+            }
+
+            .sidebar,
+            .topbar,
+            .editor-card,
+            .toast {
+                display: none !important;
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+
+            .editor-workspace {
+                display: block;
+                padding: 0;
+            }
+
+            .preview-pane-wrapper {
+                position: static;
+            }
+
+            .invoice-paper {
+                border: 0;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+
+        .creation-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .creation-modal.open { display: flex; }
+
+        .creation-modal-card {
+            width: min(460px, 100%);
+            background: #FFFFFF;
+            border-radius: var(--radius-xl);
+            padding: 28px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+        }
+
+        .creation-modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .creation-modal-actions .btn { flex: 1; }
+
+        .invoice-status-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            background: #FFFFFF;
+            color: var(--gray-600);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .invoice-status-control select {
+            border: 0;
+            background: transparent;
+            color: var(--gray-800);
+            font: inherit;
+            cursor: pointer;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <a href="index.html" class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            </div>
+            <div>
+                <span class="brand-text">izi Facturation</span>
+                <span class="brand-badge">Lyon</span>
+            </div>
+        </a>
+
+        <div class="sidebar-nav">
+            <span class="nav-label">Menu Principal</span>
+            <a href="dashboard.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Tableau de bord
+            </a>
+            <a href="devis.html" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Factures & Devis
+            </a>
+            <a href="clients.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Répertoire Clients
+            </a>
+            <a href="transactions-tva.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Transactions & TVA
+            </a>
+
+            <span class="nav-label" style="margin-top:16px;">Comptabilité & Exports</span>
+            <a href="export-fec.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>
+                Export FEC Expert
+            </a>
+            <a href="parametres.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.8 1.8-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V22h-2.55v-.1a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-1.8-1.8.06-.06A1.7 1.7 0 0 0 8.1 15a1.7 1.7 0 0 0-1.56-1.03H6.4v-2.55h.14A1.7 1.7 0 0 0 8.1 10a1.7 1.7 0 0 0-.34-1.88L7.7 8.06l1.8-1.8.06.06A1.7 1.7 0 0 0 11.44 6a1.7 1.7 0 0 0 1.03-1.56V4h2.55v.44A1.7 1.7 0 0 0 16.05 6a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.8 1.8-.06.06A1.7 1.7 0 0 0 19.4 10a1.7 1.7 0 0 0 1.56 1.03H21v2.55h-.04A1.7 1.7 0 0 0 19.4 15z"></path></svg>
+                Paramètres
+            </a>
+            <a href="index.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                Retour au Site
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar">IF</div>
+                <div>
+                    <div class="user-name">Mon Entreprise</div>
+                    <div class="user-role">Lyon • Plan Pro</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div>
+                <h2 style="font-size:18px;">Éditeur de Factures & Devis Factur-X</h2>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <label class="invoice-status-control">Statut
+                    <select id="invoice-status" onchange="updateInvoiceStatus(this.value)">
+                        <option value="BROUILLON">Brouillon</option>
+                        <option value="ENVOYEE">Envoyée</option>
+                        <option value="PAYEE">Payée</option>
+                        <option value="RETARD">En retard</option>
+                    </select>
+                </label>
+                <button class="btn btn-outline" onclick="showToast('Brouillon sauvegardé automatiquement');">Sauvegarder Brouillon</button>
+                <button class="btn btn-primary" onclick="generateAndDownloadPDF()">📥 Exporter en PDF</button>
+                <button class="btn btn-primary" style="background:#059669;" onclick="sendInvoiceToClient()">✉️ Envoyer au Client</button>
+                <button class="btn btn-primary" onclick="createInvoice()">Créer la facture</button>
+            </div>
+        </header>
+
+        <main class="editor-workspace">
+            <!-- LEFT: FORM CONTROLS -->
+            <div class="editor-card">
+                <div class="doc-type-toggle">
+                    <button class="type-btn active" id="btn-type-fac" onclick="setDocType('FACTURE')">📄 Facture Standard</button>
+                    <button class="type-btn" id="btn-type-dev" onclick="setDocType('DEVIS')">📝 Devis Commercial</button>
+                    <button class="type-btn" id="btn-type-rec" onclick="setDocType('RECURRENTE')">🔄 Facture Récurrente</button>
+                </div>
+
+                <div class="form-section-title">Informations Générales</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Numéro de document</label>
+                        <input type="text" class="mono font-bold" id="doc-number" value="FAC-2026-099" oninput="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Client destinataire</label>
+                        <select id="doc-client" onchange="updatePreview()">
+                            <option value="Bouchon Le Garet (Lyon 1er)">Bouchon Le Garet (Lyon 1er)</option>
+                            <option value="Agence Confluence Digital (Lyon 2e)">Agence Confluence Digital (Lyon 2e)</option>
+                            <option value="Rhône Rénovation BTP (Villeurbanne)">Rhône Rénovation BTP (Villeurbanne)</option>
+                            <option value="Café des Canuts (Croix-Rousse)">Café des Canuts (Croix-Rousse)</option>
+                            <option value="Tech Lyon Part-Dieu (Lyon 3e)">Tech Lyon Part-Dieu (Lyon 3e)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date d'émission</label>
+                        <input type="date" id="doc-date" value="2026-09-05" onchange="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Date d'échéance (Règlement)</label>
+                        <input type="date" id="doc-due" value="2026-09-20" onchange="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="form-section-title">Lignes de Prestations / Articles</div>
+                <table class="items-table-editor" id="items-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40%;">Désignation</th>
+                            <th style="width:15%;">Qté</th>
+                            <th style="width:20%;">Prix Unit. HT</th>
+                            <th style="width:18%;">TVA</th>
+                            <th style="width:7%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-tbody">
+                        <tr>
+                            <td><input type="text" value="Développement & Intégration Web SaaS" oninput="updatePreview()"></td>
+                            <td><input type="number" value="1" min="1" oninput="updatePreview()"></td>
+                            <td><input type="number" value="1850" step="10" oninput="updatePreview()"></td>
+                            <td>
+                                <select onchange="updatePreview()">
+                                    <option value="0.20" selected>20%</option>
+                                    <option value="0.10">10%</option>
+                                    <option value="0.055">5,5%</option>
+                                    <option value="0">0%</option>
+                                </select>
+                            </td>
+                            <td><button class="delete-row-btn" onclick="deleteRow(this)">✕</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="Maintenance & Hébergement Sécurisé FR (Mensuel)" oninput="updatePreview()"></td>
+                            <td><input type="number" value="1" min="1" oninput="updatePreview()"></td>
+                            <td><input type="number" value="250" step="10" oninput="updatePreview()"></td>
+                            <td>
+                                <select onchange="updatePreview()">
+                                    <option value="0.20" selected>20%</option>
+                                    <option value="0.10">10%</option>
+                                    <option value="0.055">5,5%</option>
+                                    <option value="0">0%</option>
+                                </select>
+                            </td>
+                            <td><button class="delete-row-btn" onclick="deleteRow(this)">✕</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <button class="btn btn-outline" style="width:100%; margin-top:12px;" onclick="addItemRow()">
+                    + Ajouter une ligne de prestation
+                </button>
+            </div>
+
+            <!-- RIGHT: LIVE PREVIEW PANE -->
+            <div class="preview-pane-wrapper">
+                <div class="invoice-paper">
+                    <div class="paper-header">
+                        <div>
+                            <div class="doc-watermark-title" id="preview-doc-type">FACTURE</div>
+                            <div class="mono font-bold" style="color:var(--gray-500); margin-top:4px;" id="preview-doc-num">#FAC-2026-099</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div id="company-name" style="font-weight:800; font-size:16px; color:var(--purple-700);">iziFacture SAS</div>
+                            <div id="company-details" style="font-size:11.5px; color:var(--gray-500);">RC / SIRET : 849 203 118 00024<br>RCS Lyon • TVA FR 84 849203118</div>
+                        </div>
+                    </div>
+
+                    <div class="paper-meta-grid">
+                        <div>
+                            <div style="font-size:11px; text-transform:uppercase; color:var(--gray-400); font-weight:700;">Facturé à :</div>
+                            <div style="font-weight:700; color:var(--gray-900);" id="preview-client">Bouchon Le Garet</div>
+                            <div style="color:var(--gray-500);">Métropole de Lyon</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div><strong>Émission :</strong> <span id="preview-date">05/09/2026</span></div>
+                            <div><strong>Échéance :</strong> <span id="preview-due">20/09/2026</span></div>
+                        </div>
+                    </div>
+
+                    <table class="paper-table">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th style="text-align:center;">Qté</th>
+                                <th style="text-align:right;">P.U HT</th>
+                                <th style="text-align:right;">Total HT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preview-items-body">
+                            <!-- Populated in JS -->
+                        </tbody>
+                    </table>
+
+                    <div class="paper-totals">
+                        <div class="total-row">
+                            <span style="color:var(--gray-500);">Sous-total HT :</span>
+                            <span class="mono font-bold" id="prev-subtotal">2 100,00 €</span>
+                        </div>
+                        <div class="total-row">
+                            <span style="color:var(--gray-500);">Total TVA (20%) :</span>
+                            <span class="mono font-bold" id="prev-tva">420,00 €</span>
+                        </div>
+                        <div class="total-row final">
+                            <span>Total TTC :</span>
+                            <span class="mono" id="prev-ttc">2 520,00 €</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:28px; padding-top:16px; border-top:1px solid var(--gray-200); font-size:11px; color:var(--gray-400); display:flex; justify-content:space-between;">
+                        <span>Paiement par virement SEPA ou CB en ligne</span>
+                        <span>Format conforme Factur-X 2026</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast">Notification</div>
+
+    <div class="creation-modal" id="creation-modal" role="dialog" aria-modal="true" aria-labelledby="creation-modal-title">
+        <div class="creation-modal-card">
+            <h2 id="creation-modal-title">Facture créée</h2>
+            <p id="creation-modal-message" style="color:var(--gray-500); margin-top:8px;">Votre facture est enregistrée.</p>
+            <div class="creation-modal-actions">
+                <button class="btn btn-outline" onclick="window.print()">📥 Télécharger la facture</button>
+                <a class="btn btn-primary" href="dashboard.html">Retour aux factures</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentType = 'FACTURE';
+
+        function setDocType(type) {
+            currentType = type;
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            if (type === 'FACTURE') {
+                document.getElementById('btn-type-fac').classList.add('active');
+                document.getElementById('doc-number').value = 'FAC-2026-099';
+            } else if (type === 'DEVIS') {
+                document.getElementById('btn-type-dev').classList.add('active');
+                document.getElementById('doc-number').value = 'DEV-2026-042';
+            } else {
+                document.getElementById('btn-type-rec').classList.add('active');
+                document.getElementById('doc-number').value = 'REC-2026-015';
+            }
+            updatePreview();
+        }
+
+        function addItemRow() {
+            const tbody = document.getElementById('items-tbody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" value="Nouvelle prestation de service" oninput="updatePreview()"></td>
+                <td><input type="number" value="1" min="1" oninput="updatePreview()"></td>
+                <td><input type="number" value="500" step="10" oninput="updatePreview()"></td>
+                <td>
+                    <select onchange="updatePreview()">
+                        <option value="0.20" selected>20%</option>
+                        <option value="0.10">10%</option>
+                        <option value="0.055">5,5%</option>
+                        <option value="0">0%</option>
+                    </select>
+                </td>
+                <td><button class="delete-row-btn" onclick="deleteRow(this)">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+            updatePreview();
+        }
+
+        function deleteRow(btn) {
+            const row = btn.closest('tr');
+            if (document.querySelectorAll('#items-tbody tr').length > 1) {
+                row.remove();
+                updatePreview();
+            } else {
+                showToast('Il faut au moins une ligne de prestation');
+            }
+        }
+
+        function updatePreview() {
+            document.getElementById('preview-doc-type').textContent = currentType === 'DEVIS' ? 'DEVIS' : 'FACTURE';
+            document.getElementById('preview-doc-num').textContent = '#' + document.getElementById('doc-number').value;
+            document.getElementById('preview-client').textContent = document.getElementById('doc-client').value;
+            document.getElementById('preview-date').textContent = document.getElementById('doc-date').value;
+            document.getElementById('preview-due').textContent = document.getElementById('doc-due').value;
+
+            const rows = document.querySelectorAll('#items-tbody tr');
+            const previewTbody = document.getElementById('preview-items-body');
+            previewTbody.innerHTML = '';
+
+            let totalHT = 0;
+            let totalTVA = 0;
+
+            rows.forEach(r => {
+                const desc = r.cells[0].querySelector('input').value;
+                const qty = parseFloat(r.cells[1].querySelector('input').value) || 1;
+                const price = parseFloat(r.cells[2].querySelector('input').value) || 0;
+                const tvaRate = parseFloat(r.cells[3].querySelector('select').value) || 0;
+
+                const lineHT = qty * price;
+                const lineTVA = lineHT * tvaRate;
+                totalHT += lineHT;
+                totalTVA += lineTVA;
+
+                const prevTr = document.createElement('tr');
+                prevTr.innerHTML = `
+                    <td><strong>${desc}</strong></td>
+                    <td style="text-align:center;">${qty}</td>
+                    <td class="mono" style="text-align:right;">${price.toLocaleString('fr-FR', {minimumFractionDigits:2})} €</td>
+                    <td class="mono font-bold" style="text-align:right;">${lineHT.toLocaleString('fr-FR', {minimumFractionDigits:2})} €</td>
+                `;
+                previewTbody.appendChild(prevTr);
+            });
+
+            const totalTTC = totalHT + totalTVA;
+            document.getElementById('prev-subtotal').textContent = totalHT.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+            document.getElementById('prev-tva').textContent = totalTVA.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+            document.getElementById('prev-ttc').textContent = totalTTC.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+        }
+
+        function generateAndDownloadPDF() {
+            updatePreview();
+            showToast('La fenêtre d’impression va permettre d’enregistrer la facture en PDF.');
+            setTimeout(() => window.print(), 250);
+        }
+
+        async function createInvoice() {
+            updatePreview();
+            const items = [...document.querySelectorAll('#items-tbody tr')].map(row => ({
+                description: row.cells[0].querySelector('input').value,
+                quantity: parseFloat(row.cells[1].querySelector('input').value) || 1,
+                price: parseFloat(row.cells[2].querySelector('input').value) || 0,
+                taxRate: parseFloat(row.cells[3].querySelector('select').value) || 0
+            })).filter(item => item.description);
+            const response = await fetch('/api/invoices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    number: document.getElementById('doc-number').value,
+                    client: document.getElementById('doc-client').value,
+                    issueDate: document.getElementById('doc-date').value,
+                    dueDate: document.getElementById('doc-due').value,
+                    items,
+                    totalHT: document.getElementById('prev-subtotal').textContent,
+                    totalTVA: document.getElementById('prev-tva').textContent,
+                    totalTTC: document.getElementById('prev-ttc').textContent,
+                    type: currentType
+                })
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                showToast(result.error || 'La facture n’a pas pu être créée.');
+                return;
+            }
+            document.getElementById('creation-modal-message').textContent = `La facture ${result.number} est enregistrée et disponible dans vos factures.`;
+            window.currentInvoiceId = result.id;
+            document.getElementById('invoice-status').value = result.status || 'ATTENTE';
+            document.getElementById('creation-modal').classList.add('open');
+        }
+
+        async function updateInvoiceStatus(status) {
+            if (!window.currentInvoiceId) {
+                showToast('Enregistrez d’abord la facture pour modifier son statut.');
+                document.getElementById('invoice-status').value = 'ATTENTE';
+                return;
+            }
+
+            const response = await fetch(`/api/invoices/${window.currentInvoiceId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            if (!response.ok) {
+                showToast('Le statut n’a pas pu être enregistré.');
+                return;
+            }
+            showToast('Statut de la facture enregistré.');
+        }
+
+        async function sendInvoiceToClient() {
+            const client = document.getElementById('doc-client').value;
+            const docNum = document.getElementById('doc-number').value;
+            const recipient = prompt(`Adresse email de ${client} :`);
+            if (!recipient) return;
+
+            try {
+                const response = await fetch('/api/invoices/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipient,
+                        documentNumber: docNum,
+                        client,
+                        issueDate: document.getElementById('doc-date').value,
+                        dueDate: document.getElementById('doc-due').value,
+                        totalHT: document.getElementById('prev-subtotal').textContent,
+                        totalTVA: document.getElementById('prev-tva').textContent,
+                        totalTTC: document.getElementById('prev-ttc').textContent,
+                        items: [...document.querySelectorAll('#items-tbody tr')].map(row => ({
+                            description: row.cells[0].querySelector('input').value,
+                            quantity: row.cells[1].querySelector('input').value,
+                            price: row.cells[2].querySelector('input').value,
+                            taxRate: row.cells[3].querySelector('select').value
+                        }))
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Envoi impossible.');
+                if (window.currentInvoiceId) await updateInvoiceStatus('ENVOYEE', false);
+                showToast(`Facture ${docNum} envoyée à ${recipient}.`);
+            } catch (error) {
+                showToast(error.message);
+            }
+        }
+
+        let tTimeout;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'flex';
+            clearTimeout(tTimeout);
+            tTimeout = setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            updatePreview();
+            const settings = await fetch('/api/settings').then(response => response.json()).catch(() => null);
+            if (settings) {
+                document.getElementById('company-name').textContent = settings.legalName;
+                document.getElementById('company-details').innerHTML = `${settings.registration ? `RC / SIRET : ${settings.registration}<br>` : ''}${settings.ninea ? `NINEA : ${settings.ninea}<br>` : ''}${settings.plater ? `PLATO : ${settings.plater}<br>` : ''}${settings.billingEmail || ''}`;
+            }
+        });
+    </script>
+</body>
+</html>
+

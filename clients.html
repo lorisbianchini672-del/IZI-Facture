@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Répertoire Clients — izi Facturation Lyon</title>
+    <meta name="description" content="Gestion du répertoire clients et entreprises pour les professionnels lyonnais. Fiches SIRET, historique des factures et suivi des encours.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --purple-50: #FAF5FF;
+            --purple-100: #F3E8FF;
+            --purple-200: #E9D5FF;
+            --purple-300: #D8B4FE;
+            --purple-400: #C084FC;
+            --purple-500: #A855F7;
+            --purple-600: #9333EA;
+            --purple-700: #7C3AED;
+            --purple-800: #6D28D9;
+            --purple-900: #4C1D95;
+
+            --success: #10B981;
+            --success-bg: #DEF7EC;
+            --success-text: #03543F;
+            --warning: #F59E0B;
+            --warning-bg: #FEF3C7;
+            --warning-text: #92400E;
+            --error: #EF4444;
+            --error-bg: #FEE2E2;
+            --error-text: #991B1B;
+
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --gray-900: #0F172A;
+
+            --bg-body: #F8FAFC;
+            --border-card: #E2E8F0;
+            --bg-gradient: linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #6D28D9 100%);
+            --shadow-subtle: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-card: 0 4px 14px rgba(0,0,0,0.04);
+            --shadow-float: 0 12px 30px -4px rgba(124, 58, 237, 0.2);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14.5px;
+            background: var(--bg-body);
+            color: var(--gray-800);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            color: var(--gray-900);
+            letter-spacing: -0.02em;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: #FFFFFF;
+            border-right: 1px solid var(--border-card);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--gray-100);
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--bg-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-text {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--gray-900);
+        }
+
+        .brand-badge {
+            font-size: 9px;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            padding: 2px 6px;
+            border-radius: var(--radius-full);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav {
+            padding: 20px 14px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gray-400);
+            padding: 8px 12px 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: var(--purple-50);
+            color: var(--purple-700);
+        }
+
+        .nav-item.active {
+            background: var(--purple-50);
+            color: var(--purple-700);
+            font-weight: 700;
+            border-left: 3px solid var(--purple-600);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--gray-100);
+            background: var(--gray-50);
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7C3AED, #A855F7);
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--gray-900);
+        }
+
+        .user-role {
+            font-size: 11.5px;
+            color: var(--gray-500);
+        }
+
+        /* MAIN CONTENT */
+        .main-wrapper {
+            margin-left: 260px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 72px;
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-card);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .search-box {
+            position: relative;
+            width: 320px;
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+            width: 16px;
+            height: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 9px 16px 9px 40px;
+            background: var(--gray-50);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-box input:focus {
+            background: #FFFFFF;
+            border-color: var(--purple-400);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.45);
+        }
+
+        .btn-outline {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            color: var(--gray-700);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+        }
+
+        .content-container {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .page-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        /* CLIENTS STATS */
+        .clients-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .kpi-box {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .kpi-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .kpi-number {
+            font-family: 'Space Mono', monospace;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--purple-900);
+            margin: 6px 0 2px;
+        }
+
+        /* CLIENTS TABLE CARD */
+        .clients-table-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-subtle);
+            overflow: hidden;
+        }
+
+        .table-header-bar {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: var(--gray-50);
+            padding: 14px 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: var(--purple-50);
+        }
+
+        .badge-client {
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            font-size: 11.5px;
+            font-weight: 700;
+        }
+
+        .badge-active { background: var(--success-bg); color: var(--success-text); }
+        .badge-prospect { background: var(--purple-100); color: var(--purple-700); }
+
+        .client-avatar-sq {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            background: #FFFFFF;
+            width: 100%;
+            max-width: 600px;
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 24px; right: 24px;
+            background: var(--gray-100);
+            border: none;
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full { grid-column: 1 / -1; }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gray-700);
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-group input:focus { border-color: var(--purple-600); }
+
+        .toast {
+            position: fixed;
+            bottom: 28px; right: 28px;
+            background: var(--gray-900);
+            color: white;
+            padding: 14px 22px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 2000;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; }
+            .search-box { width: 200px; }
+            .content-container { padding: 18px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <a href="index.html" class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            </div>
+            <div>
+                <span class="brand-text">izi Facturation</span>
+                <span class="brand-badge">Lyon</span>
+            </div>
+        </a>
+
+        <div class="sidebar-nav">
+            <span class="nav-label">Menu Principal</span>
+            <a href="dashboard.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Tableau de bord
+            </a>
+            <a href="devis.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Factures & Devis
+            </a>
+            <a href="clients.html" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Répertoire Clients
+            </a>
+            <a href="transactions-tva.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Transactions & TVA
+            </a>
+
+            <span class="nav-label" style="margin-top:16px;">Comptabilité & Exports</span>
+            <a href="export-fec.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>
+                Export FEC Expert
+            </a>
+            <a href="index.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                Retour au Site
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar">IF</div>
+                <div>
+                    <div class="user-name">Mon Entreprise</div>
+                    <div class="user-role">Lyon • Plan Pro</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="client-search" placeholder="Rechercher client, SIRET, quartier..." onkeyup="filterClients()">
+            </div>
+            <div style="display:flex; gap:12px;">
+                <button class="btn btn-outline" onclick="showToast('Export du carnet client (CSV / Excel) téléchargé');">Exporter CSV</button>
+                <button class="btn btn-primary" onclick="openAddClientModal()">+ Nouveau Client</button>
+            </div>
+        </header>
+
+        <main class="content-container">
+            <div class="page-title-row">
+                <div>
+                    <h1>Répertoire des Clients & Entreprises</h1>
+                    <p style="color:var(--gray-500); margin-top:2px;">Base clients synchronisée avec le registre SIRET INSEE / RCS Lyon</p>
+                </div>
+                <a href="devis.html" class="btn btn-primary">+ Créer un Devis / Facture</a>
+            </div>
+
+            <!-- KPIS -->
+            <div class="clients-kpi-grid">
+                <div class="kpi-box">
+                    <div class="kpi-title">Clients Actifs (Lyon)</div>
+                    <div class="kpi-number" id="kpi-total-clients">42</div>
+                    <span style="font-size:12px; color:var(--success); font-weight:700;">+5 ce mois-ci</span>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-title">Encours Total Facturé</div>
+                    <div class="kpi-number">35 770 €</div>
+                    <span style="font-size:12px; color:var(--gray-400);">Sur les 30 derniers jours</span>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-title">Délai Moyen de Paiement</div>
+                    <div class="kpi-number" style="color:var(--success);">14 jours</div>
+                    <span style="font-size:12px; color:var(--success); font-weight:700;">Excellent (Moy. France: 42j)</span>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-title">Taux de Récidive d'Achat</div>
+                    <div class="kpi-number">68%</div>
+                    <span style="font-size:12px; color:var(--purple-700); font-weight:700;">Fidélité élevée</span>
+                </div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="clients-table-card">
+                <div class="table-header-bar">
+                    <h3>Liste des Entreprises Partenaires</h3>
+                    <span style="font-size:13px; color:var(--gray-500);">Affichage de 6 clients prioritaires</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="clients-table">
+                        <thead>
+                            <tr>
+                                <th>Entreprise</th>
+                                <th>N° SIRET & RCS</th>
+                                <th>Contact Référent</th>
+                                <th>Email & Téléphone</th>
+                                <th>Total Facturé</th>
+                                <th>Statut</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="client-avatar-sq">BG</div>
+                                        <div>
+                                            <div style="font-weight:700; color:var(--gray-900);">Bouchon Le Garet</div>
+                                            <div style="font-size:12px; color:var(--gray-400);">7 Rue du Garet, 69001 Lyon</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="mono" style="font-size:12.5px;">412 890 321 00018<br><span style="color:var(--gray-400);">RCS Lyon B</span></td>
+                                <td>Jean-Marc Vianney</td>
+                                <td>contact@bouchonlegaret.fr<br><span style="font-size:12px; color:var(--gray-400);">04 78 28 16 94</span></td>
+                                <td class="mono font-bold">4 820,00 €</td>
+                                <td><span class="badge-client badge-active">Client Actif</span></td>
+                                <td style="text-align:right;">
+                                    <a href="devis.html" class="btn btn-outline" style="padding:4px 10px; font-size:12px;">Facturer</a>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="client-avatar-sq" style="background:#ECFDF5; color:#059669;">CD</div>
+                                        <div>
+                                            <div style="font-weight:700; color:var(--gray-900);">Agence Confluence Digital</div>
+                                            <div style="font-size:12px; color:var(--gray-400);">45 Quai Rambaud, 69002 Lyon</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="mono" style="font-size:12.5px;">849 203 118 00024<br><span style="color:var(--gray-400);">RCS Lyon B</span></td>
+                                <td>Alexandre Lambert</td>
+                                <td>a.lambert@confluence-dig.com<br><span style="font-size:12px; color:var(--gray-400);">04 72 40 19 88</span></td>
+                                <td class="mono font-bold">12 450,00 €</td>
+                                <td><span class="badge-client badge-active">Client Actif</span></td>
+                                <td style="text-align:right;">
+                                    <a href="devis.html" class="btn btn-outline" style="padding:4px 10px; font-size:12px;">Facturer</a>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="client-avatar-sq" style="background:#FEF3C7; color:#B45309;">RR</div>
+                                        <div>
+                                            <div style="font-weight:700; color:var(--gray-900);">Rhône Rénovation BTP</div>
+                                            <div style="font-size:12px; color:var(--gray-400);">128 Cours Emile Zola, 69100 Villeurbanne</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="mono" style="font-size:12.5px;">534 892 101 00032<br><span style="color:var(--gray-400);">RCS Lyon B</span></td>
+                                <td>Stéphane Mercier</td>
+                                <td>mercie.btp@rhone-renov.fr<br><span style="font-size:12px; color:var(--gray-400);">06 14 88 92 10</span></td>
+                                <td class="mono font-bold">18 600,00 €</td>
+                                <td><span class="badge-client badge-active">Client Actif</span></td>
+                                <td style="text-align:right;">
+                                    <a href="devis.html" class="btn btn-outline" style="padding:4px 10px; font-size:12px;">Facturer</a>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="client-avatar-sq" style="background:#FEE2E2; color:#B91C1C;">CC</div>
+                                        <div>
+                                            <div style="font-weight:700; color:var(--gray-900);">Café des Canuts</div>
+                                            <div style="font-size:12px; color:var(--gray-400);">18 Place de la Croix-Rousse, 69004 Lyon</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="mono" style="font-size:12.5px;">389 450 120 00015<br><span style="color:var(--gray-400);">RCS Lyon A</span></td>
+                                <td>Mireille Dupuis</td>
+                                <td>mireille@cafedescanuts.fr<br><span style="font-size:12px; color:var(--gray-400);">04 78 29 44 12</span></td>
+                                <td class="mono font-bold">3 900,00 €</td>
+                                <td><span class="badge-client badge-active">Client Actif</span></td>
+                                <td style="text-align:right;">
+                                    <a href="devis.html" class="btn btn-outline" style="padding:4px 10px; font-size:12px;">Facturer</a>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="client-avatar-sq">TL</div>
+                                        <div>
+                                            <div style="font-weight:700; color:var(--gray-900);">Tech Lyon Part-Dieu SAS</div>
+                                            <div style="font-size:12px; color:var(--gray-400);">Tour Incity, 116 Cours Lafayette, 69003 Lyon</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="mono" style="font-size:12.5px;">812 345 678 00045<br><span style="color:var(--gray-400);">RCS Lyon B</span></td>
+                                <td>Karim Benali</td>
+                                <td>finance@techlyon.io<br><span style="font-size:12px; color:var(--gray-400);">04 37 91 22 00</span></td>
+                                <td class="mono font-bold">24 100,00 €</td>
+                                <td><span class="badge-client badge-active">Client VIP</span></td>
+                                <td style="text-align:right;">
+                                    <a href="devis.html" class="btn btn-outline" style="padding:4px 10px; font-size:12px;">Facturer</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL NOUVEAU CLIENT -->
+    <div class="modal-overlay" id="add-client-modal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeAddClientModal()">✕</button>
+            <h2>Ajouter une Entreprise Cliente</h2>
+            <p style="font-size:13.5px; color:var(--gray-500); margin-top:4px;">Renseignez le SIRET pour préremplir les données INSEE automatiquement</p>
+
+            <form onsubmit="handleAddClient(event)">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Numéro SIRET (14 chiffres)</label>
+                        <input type="text" class="mono" id="new-siret" placeholder="Ex: 84920311800024" required>
+                    </div>
+                    <div class="form-group full">
+                        <label>Raison Sociale</label>
+                        <input type="text" id="new-name" placeholder="Nom de l'entreprise..." required>
+                    </div>
+                    <div class="form-group full">
+                        <label>Adresse du Siège (Lyon & Métropole)</label>
+                        <input type="text" id="new-address" placeholder="Ex: 15 Rue de la République, 69002 Lyon" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nom du Contact</label>
+                        <input type="text" id="new-contact" placeholder="Prénom & Nom" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Facturation</label>
+                        <input type="email" id="new-email" placeholder="compta@client.fr" required>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+                    <button type="button" class="btn btn-outline" onclick="closeAddClientModal()">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer la fiche client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Notification</div>
+
+    <script>
+        function filterClients() {
+            const input = document.getElementById('client-search').value.toLowerCase();
+            const rows = document.querySelectorAll('#clients-table tbody tr');
+            rows.forEach(r => {
+                r.style.display = r.innerText.toLowerCase().includes(input) ? '' : 'none';
+            });
+        }
+
+        function openAddClientModal() {
+            document.getElementById('add-client-modal').classList.add('open');
+        }
+
+        function closeAddClientModal() {
+            document.getElementById('add-client-modal').classList.remove('open');
+        }
+
+        function handleAddClient(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-name').value;
+            const siret = document.getElementById('new-siret').value;
+            const address = document.getElementById('new-address').value;
+            const contact = document.getElementById('new-contact').value;
+            const email = document.getElementById('new-email').value;
+
+            const tbody = document.querySelector('#clients-table tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="client-avatar-sq" style="background:#FAF5FF; color:#7C3AED;">${name.substring(0,2).toUpperCase()}</div>
+                        <div>
+                            <div style="font-weight:700; color:var(--gray-900);">${name}</div>
+                            <div style="font-size:12px; color:var(--gray-400);">${address}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="mono" style="font-size:12.5px;">${siret}<br><span style="color:var(--gray-400);">RCS Lyon</span></td>
+                <td>${contact}</td>
+                <td>${email}</td>
+                <td class="mono font-bold">0,00 €</td>
+                <td><span class="badge-client badge-prospect">Nouveau</span></td>
+                <td style="text-align:right;">
+                    <a href="devis.html" class="btn btn-outline" style="padding:4px 10px; font-size:12px;">Facturer</a>
+                </td>
+            `;
+            tbody.insertBefore(row, tbody.firstChild);
+
+            closeAddClientModal();
+            showToast(`Entreprise ${name} ajoutée avec succès au répertoire !`);
+        }
+
+        let tTimeout;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'flex';
+            clearTimeout(tTimeout);
+            tTimeout = setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+    </script>
+</body>
+</html>
+

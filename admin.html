@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Administration — iziFacture</title>
+    <style>
+        :root { font-family: system-ui, sans-serif; color: #172033; background: #f6f7fb; }
+        body { margin: 0; padding: 32px; }
+        main { max-width: 1100px; margin: auto; }
+        h1 { margin: 0 0 8px; }
+        p { color: #687386; }
+        .toolbar, .card { background: white; border: 1px solid #e2e6ef; border-radius: 14px; padding: 20px; box-shadow: 0 5px 18px #18243d0b; }
+        .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 24px 0; }
+        input, button { border: 1px solid #d5dbe7; border-radius: 8px; padding: 11px 14px; font: inherit; }
+        input { min-width: 280px; }
+        button { background: #7137d8; color: white; border-color: #7137d8; cursor: pointer; font-weight: 700; }
+        .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .metric strong { display: block; font-size: 25px; margin-top: 6px; }
+        .metric span { color: #687386; font-size: 13px; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 13px 10px; border-bottom: 1px solid #edf0f5; white-space: nowrap; }
+        th { color: #687386; font-size: 12px; text-transform: uppercase; }
+        .status { color: #087f5b; font-weight: 700; }
+        .error { color: #b42318; }
+        @media (max-width: 680px) { body { padding: 18px; } .metrics { grid-template-columns: 1fr; } input { min-width: 0; width: 100%; } }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Commandes & revenus</h1>
+    <p>Vue privée du gérant. Les données proviennent des confirmations Stripe.</p>
+    <div class="toolbar">
+        <input id="token" type="password" placeholder="ADMIN_TOKEN">
+        <button id="load">Charger les commandes</button>
+        <span id="message"></span>
+    </div>
+    <section class="metrics">
+        <div class="card metric"><span>Commandes confirmées</span><strong id="orders-count">0</strong></div>
+        <div class="card metric"><span>Revenus encaissés</span><strong id="revenue">0,00 €</strong></div>
+        <div class="card metric"><span>En attente</span><strong id="pending">0</strong></div>
+    </section>
+    <section class="card table-wrap">
+        <table>
+            <thead><tr><th>Date</th><th>Plan</th><th>Email</th><th>Montant</th><th>Statut</th></tr></thead>
+            <tbody id="orders"><tr><td colspan="5">Aucune donnée chargée.</td></tr></tbody>
+        </table>
+    </section>
+</main>
+<script>
+    const tokenInput = document.getElementById('token');
+    const message = document.getElementById('message');
+    document.getElementById('load').addEventListener('click', async () => {
+        message.textContent = 'Chargement...';
+        message.className = '';
+        try {
+            const response = await fetch('/api/orders', { headers: { 'x-admin-token': tokenInput.value } });
+            const orders = await response.json();
+            if (!response.ok) throw new Error(orders.error || 'Accès refusé');
+            const paid = orders.filter(order => order.status === 'paid');
+            document.getElementById('orders-count').textContent = paid.length;
+            document.getElementById('pending').textContent = orders.filter(order => order.status === 'pending').length;
+            document.getElementById('revenue').textContent = (paid.reduce((sum, order) => sum + order.amount, 0) / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+            document.getElementById('orders').innerHTML = orders.length ? orders.map(order => `<tr><td>${new Date(order.paidAt || order.createdAt).toLocaleDateString('fr-FR')}</td><td>${order.plan}</td><td>${order.customerEmail || 'En attente'}</td><td>${(order.amount / 100).toLocaleString('fr-FR', { style: 'currency', currency: (order.currency || 'eur').toUpperCase() })}</td><td class="status">${order.status}</td></tr>`).join('') : '<tr><td colspan="5">Aucune commande.</td></tr>';
+            message.textContent = 'Données actualisées';
+        } catch (error) { message.textContent = error.message; message.className = 'error'; }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>izi Facturation Lyon — Le logiciel de facturation pensé pour les entreprises lyonnaises</title>
+    <meta name="description" content="Le logiciel de facturation nouvelle génération pour les TPE, PME et indépendants de la Métropole de Lyon. Conforme Factur-X 2026, TVA automatique, devis & factures en 2 clics. Tarifs dès 0€/mois.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ========================================
+           RESET & FOUNDATIONS
+           ======================================== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Palette Violets Premium */
+            --purple-50: #FAF5FF;
+            --purple-100: #F3E8FF;
+            --purple-200: #E9D5FF;
+            --purple-300: #D8B4FE;
+            --purple-400: #C084FC;
+            --purple-500: #A855F7;
+            --purple-600: #9333EA;
+            --purple-700: #7C3AED;
+            --purple-800: #6D28D9;
+            --purple-900: #4C1D95;
+            --purple-950: #2E1065;
+
+            /* Lyon Gold Accent & Sémantique */
+            --gold-400: #FBBF24;
+            --gold-500: #F59E0B;
+            --success: #10B981;
+            --success-light: #ECFDF5;
+            --warning: #F59E0B;
+            --error: #EF4444;
+
+            /* Neutres chaleureux */
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+
+            /* Surfaces & Gradients */
+            --bg-primary: #FFFFFF;
+            --bg-secondary: var(--purple-50);
+            --bg-gradient: linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #6D28D9 100%);
+            --bg-gradient-hover: linear-gradient(135deg, #6D28D9 0%, #7C3AED 50%, #9333EA 100%);
+            --bg-gradient-soft: linear-gradient(180deg, #FBF8FF 0%, #FFFFFF 100%);
+
+            /* Typo & Ombres */
+            --text-primary: var(--gray-900);
+            --text-secondary: var(--gray-600);
+            --text-muted: var(--gray-400);
+            --border-color: #E9D5FF;
+            --border-light: #F3E8FF;
+
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(124, 58, 237, 0.08);
+            --shadow-lg: 0 12px 28px -4px rgba(124, 58, 237, 0.12);
+            --shadow-xl: 0 24px 48px -12px rgba(124, 58, 237, 0.18);
+
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --radius-full: 9999px;
+
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 16px;
+            line-height: 1.65;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            overflow-x: hidden;
+        }
+
+        /* Subtle Noise Overlay for Texture */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            opacity: 0.02;
+            z-index: 9999;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* ========================================
+           TYPOGRAPHY & UTILITIES
+           ======================================== */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            line-height: 1.15;
+            color: var(--text-primary);
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .text-center { text-align: center; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: var(--radius-full);
+            background: var(--purple-100);
+            color: var(--purple-700);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            border: 1px solid var(--purple-200);
+        }
+
+        .section-tag::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--purple-600);
+        }
+
+        .section-title {
+            font-size: clamp(30px, 4.5vw, 44px);
+            margin-bottom: 16px;
+            font-weight: 800;
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 620px;
+            line-height: 1.65;
+        }
+
+        .text-gradient {
+            background: var(--bg-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ========================================
+           BUTTONS
+           ======================================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s var(--ease-spring);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 15px 35px -5px rgba(124, 58, 237, 0.55);
+            background: var(--bg-gradient-hover);
+        }
+
+        .btn-secondary {
+            background: #FFFFFF;
+            color: var(--purple-700);
+            border: 1.5px solid var(--purple-200);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            background: var(--purple-50);
+            border-color: var(--purple-400);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-white {
+            background: #FFFFFF;
+            color: var(--purple-800);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+
+        .btn-white:hover {
+            background: #FAFAFA;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+            color: var(--purple-900);
+        }
+
+        .btn-lg {
+            padding: 16px 34px;
+            font-size: 16px;
+            border-radius: var(--radius-lg);
+        }
+
+        /* ========================================
+           NAVBAR
+           ======================================== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(233, 213, 255, 0.7);
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.04);
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--gray-900);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+        }
+
+        .logo-badge {
+            font-size: 10px;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: 2px;
+        }
+
+        .navbar-links {
+            display: none;
+            list-style: none;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .navbar-links a {
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-600);
+            transition: color 0.2s ease;
+        }
+
+        .navbar-links a:hover {
+            color: var(--purple-700);
+        }
+
+        .navbar-actions {
+            display: none;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .navbar-login {
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gray-700);
+            transition: color 0.2s ease;
+        }
+
+        .navbar-login:hover {
+            color: var(--purple-700);
+        }
+
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .hamburger span {
+            width: 24px;
+            height: 2px;
+            background: var(--gray-800);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        @media (min-width: 900px) {
+            .navbar-links { display: flex; }
+            .navbar-actions { display: flex; }
+            .hamburger { display: none; }
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0; right: -100%;
+            width: 80%; max-width: 340px;
+            height: 100vh;
+            background: #FFFFFF;
+            padding: 80px 28px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.1);
+            transition: right 0.35s ease;
+            z-index: 999;
+        }
+
+        .mobile-menu.open { right: 0; }
+
+        .mobile-menu a {
+            text-decoration: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--gray-800);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .mobile-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 998;
+        }
+
+        .mobile-backdrop.open { opacity: 1; pointer-events: all; }
+
+        /* ========================================
+           HERO SECTION
+           ======================================== */
+        .hero {
+            position: relative;
+            padding: 150px 0 90px;
+            background: var(--bg-gradient-soft);
+            overflow: hidden;
+        }
+
+        .hero-glow-1 {
+            position: absolute;
+            top: -150px;
+            right: -100px;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.22) 0%, rgba(243, 232, 255, 0.05) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero-glow-2 {
+            position: absolute;
+            bottom: -80px;
+            left: -120px;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(233, 213, 255, 0.6) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #FFFFFF;
+            border: 1px solid var(--purple-200);
+            border-radius: var(--radius-full);
+            padding: 6px 16px 6px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--purple-800);
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.08);
+            margin-bottom: 24px;
+        }
+
+        .badge-pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .hero-title {
+            font-size: clamp(36px, 5.5vw, 56px);
+            margin-bottom: 20px;
+            letter-spacing: -0.035em;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 32px;
+            max-width: 540px;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 36px;
+        }
+
+        .hero-trust {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding-top: 10px;
+        }
+
+        .trust-avatars {
+            display: flex;
+        }
+
+        .trust-avatars .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #FFFFFF;
+            margin-left: -8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .trust-avatars .avatar:first-child { margin-left: 0; }
+
+        .trust-text {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        .trust-text strong {
+            color: var(--gray-900);
+        }
+
+        /* Hero Dashboard Mockup */
+        .mockup-wrapper {
+            position: relative;
+        }
+
+        .mockup-card {
+            background: #FFFFFF;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--purple-200);
+            box-shadow: var(--shadow-xl), 0 0 0 1px rgba(147, 51, 234, 0.05);
+            overflow: hidden;
+            transition: transform 0.5s ease;
+        }
+
+        .mockup-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .mockup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: var(--purple-50);
+            border-bottom: 1px solid var(--purple-100);
+        }
+
+        .mockup-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .mockup-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .mockup-search {
+            background: #FFFFFF;
+            border: 1px solid var(--purple-200);
+            padding: 5px 14px;
+            border-radius: var(--radius-sm);
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            color: var(--purple-700);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mockup-body {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+
+        .mockup-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .mockup-stat-box {
+            padding: 16px;
+            background: var(--purple-50);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--purple-100);
+        }
+
+        .mockup-stat-title {
+            font-size: 12px;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+
+        .mockup-stat-number {
+            font-family: 'Space Mono', monospace;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--purple-900);
+        }
+
+        .mockup-stat-trend {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--success);
+            margin-top: 4px;
+        }
+
+        .mockup-invoice-list {
+            background: #FFFFFF;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .mockup-list-header {
+            padding: 12px 16px;
+            background: var(--gray-50);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gray-700);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .mockup-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 13px;
+        }
+
+        .mockup-row:last-child { border-bottom: none; }
+
+        .client-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .client-name {
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .client-loc {
+            font-size: 11px;
+            color: var(--gray-400);
+        }
+
+        .badge-status {
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .badge-status.paid {
+            background: #DEF7EC;
+            color: #03543F;
+        }
+
+        .badge-status.pending {
+            background: #FEF08A;
+            color: #713F12;
+        }
+
+        .amount-box {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        @media (min-width: 900px) {
+            .hero-grid {
+                grid-template-columns: 1.05fr 1fr;
+                gap: 56px;
+            }
+        }
+
+        /* ========================================
+           LOCAL TRUST BAR (Lyon Métropole)
+           ======================================== */
+        .trust-bar {
+            padding: 32px 0;
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--purple-100);
+        }
+
+        .trust-bar-text {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gray-400);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .trust-badges {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 24px 40px;
+        }
+
+        .trust-badge-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gray-600);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .trust-badge-item svg {
+            color: var(--purple-600);
+        }
+
+        /* ========================================
+           SECTION PROBLÈMES
+           ======================================== */
+        .problems {
+            padding: 96px 0;
+            background: #FFFFFF;
+        }
+
+        .problems-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .problem-card {
+            background: #FFFFFF;
+            border: 1px solid var(--purple-100);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .problem-card:hover {
+            border-color: var(--purple-300);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+        }
+
+        .problem-icon-wrapper {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .problem-icon-red {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .problem-icon-amber {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+
+        .problem-icon-purple {
+            background: var(--purple-100);
+            color: var(--purple-700);
+        }
+
+        .problem-card h3 {
+            font-size: 19px;
+            margin-bottom: 10px;
+        }
+
+        .problem-card p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        @media (min-width: 768px) {
+            .problems-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* ========================================
+           SECTION FONCTIONNALITÉS
+           ======================================== */
+        .features {
+            padding: 96px 0;
+            background: var(--bg-gradient-soft);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-top: 52px;
+        }
+
+        .feature-card {
+            background: #FFFFFF;
+            border: 1.5px solid var(--purple-100);
+            border-radius: var(--radius-xl);
+            padding: 36px 30px;
+            transition: all 0.3s var(--ease-spring);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--bg-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--purple-300);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon-box {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: var(--purple-50);
+            color: var(--purple-600);
+            border: 1px solid var(--purple-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 22px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon-box {
+            background: var(--purple-600);
+            color: #FFFFFF;
+            transform: scale(1.05);
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.65;
+        }
+
+        .feature-tag {
+            margin-top: 16px;
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--purple-700);
+            background: var(--purple-50);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        @media (min-width: 768px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* ========================================
+           SECTION COMMENT ÇA MARCHE PREVIEW
+           ======================================== */
+        .how-it-works {
+            padding: 96px 0;
+            background: #FFFFFF;
+        }
+
+        .steps-wrapper {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 36px;
+            margin-top: 56px;
+            position: relative;
+        }
+
+        .step-item {
+            text-align: center;
+            position: relative;
+            padding: 0 16px;
+        }
+
+        .step-circle {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-item h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .step-item p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            max-width: 300px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (min-width: 768px) {
+            .steps-wrapper {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+
+            .step-line {
+                position: absolute;
+                top: 34px;
+                left: calc(16.6% + 30px);
+                right: calc(16.6% + 30px);
+                height: 2px;
+                background: linear-gradient(90deg, var(--purple-200), var(--purple-400), var(--purple-200));
+                z-index: 1;
+            }
+        }
+
+        /* ========================================
+           SECTION TÉMOIGNAGES LYONNAIS
+           ======================================== */
+        .testimonials {
+            padding: 96px 0;
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-top: 52px;
+        }
+
+        .testimonial-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: var(--radius-xl);
+            padding: 34px;
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            background: rgba(255, 255, 255, 0.14);
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .testimonial-stars {
+            display: flex;
+            gap: 4px;
+            color: var(--gold-400);
+            margin-bottom: 18px;
+        }
+
+        .testimonial-card blockquote {
+            font-size: 15.5px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.92);
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+
+        .author-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .author-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            color: #FFFFFF;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .author-name {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            color: #FFFFFF;
+        }
+
+        .author-role {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        @media (min-width: 768px) {
+            .testimonials-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* ========================================
+           SECTION TARIFICATION (EUROS)
+           ======================================== */
+        .pricing {
+            padding: 96px 0;
+            background: var(--bg-gradient-soft);
+        }
+
+        .pricing-badge-save {
+            display: inline-block;
+            background: #DEF7EC;
+            color: #03543F;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            margin-top: 10px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-top: 52px;
+            align-items: stretch;
+        }
+
+        .pricing-card {
+            background: #FFFFFF;
+            border: 1.5px solid var(--purple-100);
+            border-radius: var(--radius-xl);
+            padding: 40px 32px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.3s var(--ease-spring);
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .pricing-card.featured {
+            border: 2px solid var(--purple-500);
+            box-shadow: 0 16px 36px -8px rgba(124, 58, 237, 0.25);
+            background: #FFFFFF;
+        }
+
+        .pricing-popular-tag {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-gradient);
+            color: #FFFFFF;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 4px 18px;
+            border-radius: var(--radius-full);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .pricing-header h3 {
+            font-size: 22px;
+            margin-bottom: 6px;
+        }
+
+        .pricing-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            min-height: 42px;
+        }
+
+        .price-box {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+
+        .price-amount {
+            font-family: 'Space Mono', monospace;
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--gray-900);
+            letter-spacing: -0.04em;
+        }
+
+        .price-currency {
+            font-family: 'Space Mono', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--purple-700);
+        }
+
+        .price-period {
+            font-size: 14px;
+            color: var(--gray-400);
+            margin-bottom: 24px;
+        }
+
+        .pricing-features-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 32px;
+            flex-grow: 1;
+        }
+
+        .pricing-features-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--gray-700);
+            line-height: 1.5;
+        }
+
+        .pricing-features-list li svg {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            color: var(--purple-600);
+            margin-top: 1px;
+        }
+
+        .pricing-card .btn {
+            width: 100%;
+        }
+
+        @media (min-width: 900px) {
+            .pricing-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .pricing-card.featured {
+                transform: scale(1.03);
+            }
+            .pricing-card.featured:hover {
+                transform: scale(1.05) translateY(-4px);
+            }
+        }
+
+        /* ========================================
+           SECTION CTA FINAL
+           ======================================== */
+        .final-cta {
+            padding: 96px 0;
+            background: #FFFFFF;
+        }
+
+        .cta-banner {
+            background: var(--bg-gradient);
+            border-radius: var(--radius-xl);
+            padding: 68px 36px;
+            text-align: center;
+            color: #FFFFFF;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .cta-banner h2 {
+            color: #FFFFFF;
+            font-size: clamp(30px, 4vw, 44px);
+            margin-bottom: 16px;
+            max-width: 680px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-banner p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 18px;
+            margin-bottom: 36px;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ========================================
+           FOOTER
+           ======================================== */
+        .footer {
+            background: var(--gray-900);
+            color: var(--gray-400);
+            padding: 72px 0 32px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            padding-bottom: 48px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-brand h3 {
+            color: #FFFFFF;
+            font-size: 22px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-brand p {
+            font-size: 14px;
+            line-height: 1.7;
+            max-width: 320px;
+        }
+
+        .footer-col h4 {
+            color: #FFFFFF;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-col ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-col a {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+
+        .footer-col a:hover {
+            color: #FFFFFF;
+        }
+
+        .footer-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding-top: 28px;
+            font-size: 14px;
+        }
+
+        .footer-lyon-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gray-300);
+            font-weight: 600;
+        }
+
+        @media (min-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 1.4fr 1fr 1fr 1fr;
+            }
+            .footer-bottom {
+                flex-direction: row;
+            }
+        }
+
+        /* ========================================
+           SCROLL REVEAL ANIMATIONS
+           ======================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <!-- ====== NAVBAR ====== -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-logo">
+                <div class="logo-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <span>izi Facturation <span class="logo-badge">Lyon</span></span>
+            </a>
+
+            <ul class="navbar-links">
+                <li><a href="#problemes">Pourquoi iziFacture</a></li>
+                <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+                <li><a href="comment-ca-marche.html">Comment ça marche</a></li>
+                <li><a href="#tarifs">Tarifs</a></li>
+                <li><a href="#temoignages">Avis Clients</a></li>
+            </ul>
+
+            <div class="navbar-actions">
+                <a href="dashboard.html" class="navbar-login">Espace Client</a>
+                <a href="#tarifs" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;">Essai gratuit</a>
+            </div>
+
+            <button class="hamburger" id="hamburger" aria-label="Ouvrir le menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Menu mobile -->
+    <div class="mobile-backdrop" id="mobile-backdrop"></div>
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="#problemes" class="mobile-link">Pourquoi nous</a>
+        <a href="#fonctionnalites" class="mobile-link">Fonctionnalités</a>
+        <a href="comment-ca-marche.html" class="mobile-link">Comment ça marche</a>
+        <a href="#tarifs" class="mobile-link">Tarifs</a>
+        <a href="#temoignages" class="mobile-link">Témoignages Lyon</a>
+        <a href="dashboard.html" class="btn btn-primary" style="margin-top: 10px;">Accéder au Dashboard</a>
+    </div>
+
+    <!-- ====== HERO SECTION ====== -->
+    <section class="hero">
+        <div class="hero-glow-1"></div>
+        <div class="hero-glow-2"></div>
+        <div class="container">
+            <div class="hero-grid">
+                <div>
+                    <div class="hero-badge reveal">
+                        <span class="badge-pulse"></span>
+                        Conforme Réforme Facturation Électronique & Factur-X 2026
+                    </div>
+
+                    <h1 class="hero-title reveal delay-1">
+                        La facturation simple pour les <span class="text-gradient">sociétés lyonnaises</span>.
+                    </h1>
+
+                    <p class="hero-subtitle reveal delay-2">
+                        Fini les tableurs Excel et les factures Word chronophages. Générez vos devis & factures conformes, calculez automatiquement les TVA (20%, 10%, 5,5%), et suivez vos encaissements en temps réel.
+                    </p>
+
+                    <div class="hero-actions reveal delay-3">
+                        <a href="#tarifs" class="btn btn-primary btn-lg">
+                            Commencer gratuitement
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </a>
+                        <a href="dashboard.html" class="btn btn-secondary btn-lg">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" opacity="0.2"></polygon><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                            Voir la démo
+                        </a>
+                    </div>
+
+                    <div class="hero-trust reveal delay-3">
+                        <div class="trust-avatars">
+                            <div class="avatar" style="background:#7C3AED;">CL</div>
+                            <div class="avatar" style="background:#9333EA;">MB</div>
+                            <div class="avatar" style="background:#6D28D9;">TR</div>
+                            <div class="avatar" style="background:#4C1D95;">AG</div>
+                        </div>
+                        <p class="trust-text">
+                            Adopté par <strong>+1 200 artisans, TPE & PME</strong> de la Métropole de Lyon
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Hero Dashboard Mockup -->
+                <div class="mockup-wrapper reveal delay-2">
+                    <a href="dashboard.html" style="text-decoration:none; display:block;">
+                        <div class="mockup-card">
+                            <div class="mockup-header">
+                                <div class="mockup-dots">
+                                    <span style="background:#FF5F56;"></span>
+                                    <span style="background:#FFBD2E;"></span>
+                                    <span style="background:#27C93F;"></span>
+                                </div>
+                                <div class="mockup-search">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <span>app.izifacture.fr/dashboard/lyon-rhone</span>
+                                </div>
+                                <span style="font-size:11px; font-weight:700; color:var(--purple-700);">EUR (€)</span>
+                            </div>
+
+                            <div class="mockup-body">
+                                <div class="mockup-stats-grid">
+                                    <div class="mockup-stat-box">
+                                        <div class="mockup-stat-title">Chiffre d'Affaires (Mois)</div>
+                                        <div class="mockup-stat-number" data-counter="18450" data-suffix=" €">0 €</div>
+                                        <div class="mockup-stat-trend">↑ +14.2% vs M-1</div>
+                                    </div>
+                                    <div class="mockup-stat-box">
+                                        <div class="mockup-stat-title">TVA Collectée (20%)</div>
+                                        <div class="mockup-stat-number" data-counter="3690" data-suffix=" €">0 €</div>
+                                        <div class="mockup-stat-trend" style="color:var(--purple-700);">Déclaration prête</div>
+                                    </div>
+                                </div>
+
+                                <!-- List of real Lyon invoices -->
+                                <div class="mockup-invoice-list">
+                                    <div class="mockup-list-header">
+                                        <span>Factures récentes (RCS Lyon)</span>
+                                        <span style="color:var(--purple-600);">Factur-X OK</span>
+                                    </div>
+
+                                    <div class="mockup-row">
+                                        <div class="client-info">
+                                            <span class="client-name">Bouchon Le Garet</span>
+                                            <span class="client-loc">Lyon 1er (Presqu'île)</span>
+                                        </div>
+                                        <span class="badge-status paid">Payée</span>
+                                        <span class="amount-box">1 420,00 €</span>
+                                    </div>
+
+                                    <div class="mockup-row">
+                                        <div class="client-info">
+                                            <span class="client-name">Agence Confluence Digital</span>
+                                            <span class="client-loc">Lyon 2ème (Confluence)</span>
+                                        </div>
+                                        <span class="badge-status pending">En attente (J-3)</span>
+                                        <span class="amount-box">3 850,00 €</span>
+                                    </div>
+
+                                    <div class="mockup-row">
+                                        <div class="client-info">
+                                            <span class="client-name">Rhône Rénovation BTP</span>
+                                            <span class="client-loc">Villeurbanne / Lyon 6ème</span>
+                                        </div>
+                                        <span class="badge-status paid">Payée</span>
+                                        <span class="amount-box">6 200,00 €</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== TRUST BAR METROPOLE ====== -->
+    <div class="trust-bar">
+        <div class="container">
+            <p class="trust-bar-text">Compatible avec les outils et standards des entreprises françaises</p>
+            <div class="trust-badges">
+                <div class="trust-badge-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Conforme Factur-X & Chorus Pro
+                </div>
+                <div class="trust-badge-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Mentions obligatoires Code de Commerce
+                </div>
+                <div class="trust-badge-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Export Comptable FEC & Expert-Comptable
+                </div>
+                <div class="trust-badge-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Serveurs sécurisés hébergés en France (RGPD)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SECTION PROBLÈMES ====== -->
+    <section class="problems" id="problemes">
+        <div class="container">
+            <div class="text-center">
+                <span class="section-tag reveal">Le constat</span>
+                <h2 class="section-title reveal delay-1">Pourquoi les entrepreneurs lyonnais perdent du temps</h2>
+                <p class="section-subtitle mx-auto reveal delay-2">
+                    Entre les relances clients, les erreurs de TVA et les nouvelles obligations légales 2026, la gestion administrative devient un frein à votre croissance.
+                </p>
+            </div>
+
+            <div class="problems-grid">
+                <div class="problem-card reveal">
+                    <div class="problem-icon-wrapper problem-icon-red">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                    </div>
+                    <h3>Devis & Factures Word/Excel non conformes</h3>
+                    <p>
+                        Numérotation non séquentielle, oubli du numéro SIRET, de l'adresse du siège ou des pénalités de retard légales. Vous risquez des amendes fiscales coûteuses.
+                    </p>
+                </div>
+
+                <div class="problem-card reveal delay-1">
+                    <div class="problem-icon-wrapper problem-icon-amber">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    </div>
+                    <h3>Retards de paiement et trésorerie bloquée</h3>
+                    <p>
+                        Sans suivi automatique, vos factures s'accumulent chez vos clients à Lyon et en région. Vos relances manuelles prennent des heures et créent des tensions de trésorerie.
+                    </p>
+                </div>
+
+                <div class="problem-card reveal delay-2">
+                    <div class="problem-icon-wrapper problem-icon-purple">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                    </div>
+                    <h3>Panique face à la Facturation Électronique 2026</h3>
+                    <p>
+                        La réforme de dématérialisation obligatoire approche. Les vieux logiciels compliqués facturent des modules exorbitants pour se mettre aux normes.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECTION FONCTIONNALITÉS ====== -->
+    <section class="features" id="fonctionnalites">
+        <div class="container">
+            <div class="text-center">
+                <span class="section-tag reveal">Fonctionnalités Clés</span>
+                <h2 class="section-title reveal delay-1">La puissance d'un ERP, la simplicité en plus</h2>
+                <p class="section-subtitle mx-auto reveal delay-2">
+                    Conçu spécialement pour les indépendants, consultants, agences, commerces et artisans de la région lyonnaise.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card reveal">
+                    <div class="feature-icon-box">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <h3>Factures & Devis en 2 clics</h3>
+                    <p>Créez des documents ultra-professionnels avec votre logo, conditions de paiement et signature électronique intégrée.</p>
+                    <span class="feature-tag">Génération PDF immédiate</span>
+                </div>
+
+                <div class="feature-card reveal delay-1">
+                    <div class="feature-icon-box">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    </div>
+                    <h3>TVA française automatique</h3>
+                    <p>Gestion native des taux 20%, 10%, 5,5%, 2,1%, autoliquidation BTP et exonération TVA art. 293 B du CGI pour auto-entrepreneurs.</p>
+                    <span class="feature-tag">Zéro erreur comptable</span>
+                </div>
+
+                <div class="feature-card reveal delay-2">
+                    <div class="feature-icon-box">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <h3>Suivi des paiements & Relances</h3>
+                    <p>Visualisez d'un coup d'œil les factures en attente, encaissées ou en retard. Relancez vos clients automatiquement par email ou SMS.</p>
+                    <span class="feature-tag">+24% de rapidité de paiement</span>
+                </div>
+
+                <div class="feature-card reveal delay-3">
+                    <div class="feature-icon-box">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                    <h3>CRM & Répertoire Clients</h3>
+                    <p>Centralisez les fiches de vos clients professionnels et particuliers : SIRET, adresse de livraison, historique et encours financier.</p>
+                    <span class="feature-tag">Export FEC pour expert</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECTION COMMENT ÇA MARCHE (AVEC LIEN VERS PAGE DÉDIÉE) ====== -->
+    <section class="how-it-works" id="comment-ca-marche">
+        <div class="container">
+            <div class="text-center">
+                <span class="section-tag reveal">Simplicité</span>
+                <h2 class="section-title reveal delay-1">Facturez comme un pro en 3 étapes</h2>
+                <p class="section-subtitle mx-auto reveal delay-2">Aucune installation complexe. Prêt à l'emploi directement dans votre navigateur.</p>
+            </div>
+
+            <div class="steps-wrapper">
+                <div class="step-line"></div>
+
+                <div class="step-item reveal">
+                    <div class="step-circle">1</div>
+                    <h3>Créez votre compte</h3>
+                    <p>Renseignez votre SIRET lyonnais en 30 secondes. Vos informations légales sont préremplies automatiquement.</p>
+                </div>
+
+                <div class="step-item reveal delay-1">
+                    <div class="step-circle">2</div>
+                    <h3>Générez votre facture</h3>
+                    <p>Ajoutez votre client, vos prestations ou articles, la TVA se calcule automatiquement. Personnalisez votre charte graphique.</p>
+                </div>
+
+                <div class="step-item reveal delay-2">
+                    <div class="step-circle">3</div>
+                    <h3>Envoyez et encaissez</h3>
+                    <p>Envoyez en 1 clic par email avec lien de paiement en ligne (CB / Virement SEPA) et suivez l'encaissement en direct.</p>
+                </div>
+            </div>
+
+            <div class="text-center" style="margin-top: 48px;">
+                <a href="comment-ca-marche.html" class="btn btn-secondary btn-lg">
+                    Découvrir le fonctionnement détaillé & la FAQ
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECTION TÉMOIGNAGES LYONNAIS ====== -->
+    <section class="testimonials" id="temoignages">
+        <div class="container">
+            <div class="text-center">
+                <span class="section-tag reveal" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.2);">Témoignages</span>
+                <h2 class="section-title reveal delay-1" style="color:white;">Ce que disent les entrepreneurs lyonnais</h2>
+                <p class="section-subtitle mx-auto reveal delay-2" style="color:rgba(255,255,255,0.8);">Rejoignez les dirigeants de TPE et indépendants qui ont simplifié leur facturation.</p>
+            </div>
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card reveal">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <blockquote>
+                        « En tant qu'agence web à Confluence, on passait un temps fou sur la gestion des acomptes et relances. Avec iziFacture, nos clients paient deux fois plus vite et nos factures sont magnifiques. »
+                    </blockquote>
+                    <div class="author-box">
+                        <div class="author-avatar" style="background:linear-gradient(135deg, #A855F7, #6D28D9);">AL</div>
+                        <div>
+                            <div class="author-name">Alexandre Lambert</div>
+                            <div class="author-role">Fondateur, Studio Lumina (Lyon 2e)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card reveal delay-1">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <blockquote>
+                        « Artisan électricien sur la Métropole de Lyon, l'application m'a sauvé. Je fais mes devis depuis mon utilitaire sur smartphone et la TVA 10%/20% se calcule sans que j'aie à réfléchir. »
+                    </blockquote>
+                    <div class="author-box">
+                        <div class="author-avatar" style="background:linear-gradient(135deg, #10B981, #059669);">SM</div>
+                        <div>
+                            <div class="author-name">Stéphane Mercier</div>
+                            <div class="author-role">Gérant, Rhône Volt Rénovation (Caluire / Lyon)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card reveal delay-2">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <blockquote>
+                        « Le tarif est ultra-compétitif comparé aux gros logiciels américains qui nous facturent 40€/mois pour des usines à gaz. iziFacture va droit au but et mon expert-comptable adore l'export FEC ! »
+                    </blockquote>
+                    <div class="author-box">
+                        <div class="author-avatar" style="background:linear-gradient(135deg, #F59E0B, #D97706);">CP</div>
+                        <div>
+                            <div class="author-name">Chloé Perrin</div>
+                            <div class="author-role">Consultante Marketing (Croix-Rousse, Lyon 4e)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECTION TARIFS (EN EUROS / PRIX CONCURRENTIELS) ====== -->
+    <section class="pricing" id="tarifs">
+        <div class="container">
+            <div class="text-center">
+                <span class="section-tag reveal">Tarifs Transparents</span>
+                <h2 class="section-title reveal delay-1">Des prix imbattables pour booster votre marge</h2>
+                <p class="section-subtitle mx-auto reveal delay-2">
+                    Sans engagement, sans frais cachés. Jusqu'à 60% moins cher que les logiciels traditionnels du marché.
+                </p>
+                <div class="pricing-badge-save reveal delay-2">
+                    ✨ Économisez jusqu'à 200€ par an par rapport aux solutions classiques
+                </div>
+            </div>
+
+            <div class="pricing-grid">
+                <!-- PLAN GRATUIT -->
+                <div class="pricing-card reveal">
+                    <div class="pricing-header">
+                        <h3>Gratuit</h3>
+                        <p>Idéal pour lancer son activité ou tester la solution sans risque.</p>
+                    </div>
+                    <div class="price-box">
+                        <span class="price-amount">0</span>
+                        <span class="price-currency">€</span>
+                    </div>
+                    <div class="price-period">Pour toujours (sans carte bancaire)</div>
+
+                    <ul class="pricing-features-list">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Jusqu'à 5 factures & devis / mois
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            1 utilisateur inclus
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            TVA françaises automatiques
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Export PDF conforme
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Support par email
+                        </li>
+                    </ul>
+
+                    <a href="dashboard.html" class="btn btn-secondary">Créer mon compte gratuit</a>
+                </div>
+
+                <!-- PLAN PRO LYON (POPULAIRE) -->
+                <div class="pricing-card featured reveal delay-1">
+                    <div class="pricing-popular-tag">🔥 Recommandé TPE & Indépendants</div>
+                    <div class="pricing-header">
+                        <h3>Pro Lyon</h3>
+                        <p>Pour les indépendants et professionnels qui veulent automatiser.</p>
+                    </div>
+                    <div class="price-box">
+                        <span class="price-amount">9,90</span>
+                        <span class="price-currency">€</span>
+                    </div>
+                    <div class="price-period">HT / mois (sans engagement)</div>
+
+                    <ul class="pricing-features-list">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <strong>Factures & Devis illimités</strong>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Prêt pour la Réforme Factur-X 2026
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Relances automatiques d'impayés
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Personnalisation complète (Logo + Couleurs)
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Lien de paiement en ligne CB / Stripe
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Support réactif 6j/7 sous 2h
+                        </li>
+                    </ul>
+
+                    <a href="#" class="btn btn-primary" data-checkout-plan="pro">Essayer 14 jours gratuitement</a>
+                </div>
+
+                <!-- PLAN BUSINESS PME -->
+                <div class="pricing-card reveal delay-2">
+                    <div class="pricing-header">
+                        <h3>Business & Équipe</h3>
+                        <p>Pour les PME lyonnaises avec plusieurs collaborateurs et experts.</p>
+                    </div>
+                    <div class="price-box">
+                        <span class="price-amount">24,90</span>
+                        <span class="price-currency">€</span>
+                    </div>
+                    <div class="price-period">HT / mois (sans engagement)</div>
+
+                    <ul class="pricing-features-list">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <strong>Tout le plan Pro Lyon inclus</strong>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Jusqu'à 5 utilisateurs (droits & rôles)
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Accès dédié pour votre expert-comptable
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Multi-devises et TVA intracommunautaire
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Tableaux de bord & prévisionnel de trésorerie
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Support prioritaire dédié & onboarding visio
+                        </li>
+                    </ul>
+
+                    <a href="#" class="btn btn-secondary" data-checkout-plan="business">Choisir le plan Business</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECTION FINAL CTA ====== -->
+    <section class="final-cta">
+        <div class="container">
+            <div class="cta-banner reveal">
+                <h2>Rejoignez les entreprises lyonnaises qui facturent sans stress</h2>
+                <p>Démarrez en moins de 2 minutes. 14 jours d'essai offerts, sans carte bancaire.</p>
+                <a href="dashboard.html" class="btn btn-white btn-lg">
+                    Démarrer mon essai gratuit
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== FOOTER ====== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>
+                        <div class="logo-icon" style="width:32px; height:32px; border-radius:8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        </div>
+                        iziFacture Lyon
+                    </h3>
+                    <p>
+                        La solution moderne de facturation et de gestion pour les indépendants, TPE et PME de la Métropole de Lyon et d'Auvergne-Rhône-Alpes.
+                    </p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Navigation</h4>
+                    <ul>
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+                        <li><a href="comment-ca-marche.html">Comment ça marche</a></li>
+                        <li><a href="#tarifs">Tarifs</a></li>
+                        <li><a href="dashboard.html">Espace Client</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Ressources & Support</h4>
+                    <ul>
+                        <li><a href="comment-ca-marche.html#faq">Centre d'aide & FAQ</a></li>
+                        <li><a href="comment-ca-marche.html">Guide Factur-X 2026</a></li>
+                        <li><a href="dashboard.html">Créer une facture test</a></li>
+                        <li><a href="#">Contactez l'équipe Lyon</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Légal & Sécurité</h4>
+                    <ul>
+                        <li><a href="#">Mentions Légales</a></li>
+                        <li><a href="#">Politique de Confidentialité (RGPD)</a></li>
+                        <li><a href="#">Conditions Générales de Vente</a></li>
+                        <li><a href="#">Hébergement sécurisé France</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>© 2026 iziFacture France. Tous droits réservés.</p>
+                <div class="footer-lyon-badge">
+                    <span>🦁 Fait avec passion pour l'écosystème lyonnais</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ====== JAVASCRIPT ====== -->
+    <script>
+        document.querySelectorAll('[data-checkout-plan]').forEach(button => {
+            button.addEventListener('click', async event => {
+                event.preventDefault();
+                const plan = button.dataset.checkoutPlan;
+                const originalLabel = button.textContent.trim();
+                button.textContent = 'Connexion sécurisée...';
+                button.style.pointerEvents = 'none';
+
+                try {
+                    const response = await fetch('/api/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ plan })
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Impossible de démarrer le paiement.');
+                    window.location.href = result.url;
+                } catch (error) {
+                    alert(error.message);
+                    button.textContent = originalLabel;
+                    button.style.pointerEvents = '';
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // IntersectionObserver pour les animations d'apparition au scroll
+            const reveals = document.querySelectorAll('.reveal');
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+            reveals.forEach(el => revealObserver.observe(el));
+
+            // Navbar morphing au scroll
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 40) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }, { passive: true });
+
+            // Menu Mobile
+            const hamburger = document.getElementById('hamburger');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const backdrop = document.getElementById('mobile-backdrop');
+
+            function toggleMenu() {
+                const isOpen = mobileMenu.classList.contains('open');
+                mobileMenu.classList.toggle('open');
+                backdrop.classList.toggle('open');
+                hamburger.classList.toggle('active');
+                document.body.style.overflow = isOpen ? '' : 'hidden';
+            }
+
+            hamburger.addEventListener('click', toggleMenu);
+            backdrop.addEventListener('click', toggleMenu);
+
+            document.querySelectorAll('.mobile-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('open')) toggleMenu();
+                });
+            });
+
+            // Compteurs animés dans le mockup
+            const counters = document.querySelectorAll('[data-counter]');
+            let animated = false;
+
+            const counterObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !animated) {
+                        animated = true;
+                        counters.forEach(counter => {
+                            const target = parseInt(counter.dataset.counter);
+                            const suffix = counter.dataset.suffix || '';
+                            const duration = 1400;
+                            const start = performance.now();
+
+                            function step(now) {
+                                const elapsed = now - start;
+                                const progress = Math.min(elapsed / duration, 1);
+                                const ease = 1 - Math.pow(1 - progress, 3);
+                                const current = Math.round(target * ease);
+
+                                counter.textContent = new Intl.NumberFormat('fr-FR').format(current) + suffix;
+
+                                if (progress < 1) {
+                                    requestAnimationFrame(step);
+                                }
+                            }
+                            requestAnimationFrame(step);
+                        });
+                    }
+                });
+            }, { threshold: 0.25 });
+
+            counters.forEach(el => counterObserver.observe(el));
+
+            // Boutons avec micro-interaction magnétique
+            document.querySelectorAll('.btn-primary, .btn-white').forEach(btn => {
+                btn.addEventListener('mousemove', (e) => {
+                    const rect = btn.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px) scale(1.02)`;
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
