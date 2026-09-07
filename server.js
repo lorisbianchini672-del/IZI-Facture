@@ -1,14 +1,12 @@
-import 'dotenv/config';
-import express from 'express';
-import Stripe from 'stripe';
-import nodemailer from 'nodemailer';
-import PDFDocument from 'pdfkit';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import crypto from 'node:crypto';
+require('dotenv').config();
+const express = require('express');
+const Stripe = require('stripe');
+const nodemailer = require('nodemailer');
+const PDFDocument = require('pdfkit');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const crypto = require('node:crypto');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDirectory = path.join(__dirname, 'data');
 const ordersFile = path.join(dataDirectory, 'orders.json');
 const invoicesFile = path.join(dataDirectory, 'invoices.json');
@@ -330,4 +328,4 @@ if (process.env.VERCEL !== '1') {
   });
 }
 
-export default app;
+module.exports = app;
