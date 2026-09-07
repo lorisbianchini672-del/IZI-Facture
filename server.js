@@ -323,7 +323,11 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, stripeConfigured: Boolean(stripe) });
 });
 
-app.listen(port, () => {
-  console.log(`iziFacture disponible sur ${publicUrl}`);
-  console.log(`Stripe ${stripe ? 'configuré' : 'en attente de configuration'}`);
-});
+if (process.env.VERCEL !== '1') {
+  app.listen(port, () => {
+    console.log(`iziFacture disponible sur ${publicUrl}`);
+    console.log(`Stripe ${stripe ? 'configuré' : 'en attente de configuration'}`);
+  });
+}
+
+export default app;
