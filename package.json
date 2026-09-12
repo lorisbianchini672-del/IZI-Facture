@@ -1,5 +1,5 @@
 {
-  "name": "izifacture",
+  "name": "izi",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -7,6 +7,8 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "nodemailer": "^6.9.16",
