@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Export FEC & Accès Expert-Comptable — izi Facturation Lyon</title>
+    <title>Export FEC & Accès Expert-Comptable — IZI</title>
     <meta name="description" content="Générez et téléchargez votre Fichier des Écritures Comptables (FEC) conforme DGFIP et l'archive des factures Factur-X en 1 clic.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -103,13 +103,13 @@
         .brand-icon {
             width: 38px;
             height: 38px;
-            background: var(--bg-gradient);
-            border-radius: 10px;
+            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
         }
 
         .brand-text {
@@ -370,11 +370,10 @@
     <aside class="sidebar" id="sidebar">
         <a href="index.html" class="sidebar-brand">
             <div class="brand-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14h10"></path></svg>
             </div>
             <div>
-                <span class="brand-text">izi Facturation</span>
-                <span class="brand-badge">Lyon</span>
+                <span class="brand-text">IZI</span>
             </div>
         </a>
 
@@ -413,7 +412,7 @@
                 <div class="user-avatar">IF</div>
                 <div>
                     <div class="user-name">Mon Entreprise</div>
-                    <div class="user-role">Lyon • Plan Pro</div>
+                    <div class="user-role">Paris • Plan Pro</div>
                 </div>
             </div>
         </div>
@@ -476,7 +475,7 @@
                             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path></svg>
                         </div>
                         <h3>Invitation Expert-Comptable</h3>
-                        <p>Donnez un accès direct et sécurisé en lecture seule à votre expert-comptable lyonnais pour qu'il récupère les écritures automatiquement chaque mois.</p>
+                        <p>Donnez un accès direct et sécurisé en lecture seule à votre expert-comptable français pour qu'il récupère les écritures automatiquement chaque mois.</p>
                     </div>
                     <button class="btn btn-outline" onclick="inviteAccountant()">
                         ✉️ Inviter mon cabinet comptable
@@ -534,21 +533,21 @@ VT\tJournal des Ventes\t00002\t20260828\t445710\tTVA Collectee 20%\t\t\tFAC-2026
         function downloadZipArchive() {
             showToast('Téléchargement de l\'archive ZIP des factures Factur-X 2026...');
             setTimeout(() => {
-                const sampleBlob = new Blob(["Archive Factur-X IziFacture Lyon 2026"], { type: 'application/zip' });
+                const sampleBlob = new Blob(["Archive Factur-X IZI 2026"], { type: 'application/zip' });
                 const url = URL.createObjectURL(sampleBlob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'Factures_FacturX_IziFacture_2026.zip';
+                a.download = 'Factures_FacturX_IZI_2026.zip';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                showToast('Archive Factures_FacturX_IziFacture_2026.zip enregistrée sur votre ordinateur !');
+                showToast('Archive Factures_FacturX_IZI_2026.zip enregistrée sur votre ordinateur !');
             }, 800);
         }
 
         function inviteAccountant() {
-            const email = prompt("Saisissez l'email de votre cabinet comptable :", "cabinet.compta@lyon-experts.fr");
+            const email = prompt("Saisissez l'email de votre cabinet comptable :", "cabinet.compta@experts-france.fr");
             if (email) {
                 showToast(`Invitation et lien d'accès sécurisé envoyés à ${email} !`);
             }

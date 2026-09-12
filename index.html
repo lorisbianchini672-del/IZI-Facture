@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>izi Facturation Lyon — Le logiciel de facturation pensé pour les entreprises lyonnaises</title>
-    <meta name="description" content="Le logiciel de facturation nouvelle génération pour les TPE, PME et indépendants de la Métropole de Lyon. Conforme Factur-X 2026, TVA automatique, devis & factures en 2 clics. Tarifs dès 0€/mois.">
+    <title>IZI — Le logiciel de facturation pensé pour les entreprises françaises</title>
+    <meta name="description" content="Le logiciel de facturation nouvelle génération pour les TPE, PME et indépendants en France. Conforme Factur-X 2026, TVA automatique, devis & factures en 2 clics. Tarifs dès 0€/mois.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
+   <style>
         /* ========================================
            RESET & FOUNDATIONS
            ======================================== */
@@ -32,7 +32,7 @@
             --purple-900: #4C1D95;
             --purple-950: #2E1065;
 
-            /* Lyon Gold Accent & Sémantique */
+            /* Gold Accent & Sémantique */
             --gold-400: #FBBF24;
             --gold-500: #F59E0B;
             --success: #10B981;
@@ -289,13 +289,13 @@
         .logo-icon {
             width: 40px;
             height: 40px;
-            background: var(--bg-gradient);
-            border-radius: 12px;
+            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);
         }
 
         .logo-badge {
@@ -708,7 +708,7 @@
         }
 
         /* ========================================
-           LOCAL TRUST BAR (Lyon Métropole)
+           LOCAL TRUST BAR (France)
            ======================================== */
         .trust-bar {
             padding: 32px 0;
@@ -989,7 +989,7 @@
         }
 
         /* ========================================
-           SECTION TÉMOIGNAGES LYONNAIS
+           SECTION TÉMOIGNAGES
            ======================================== */
         .testimonials {
             padding: 96px 0;
@@ -1327,7 +1327,7 @@
             font-size: 14px;
         }
 
-        .footer-lyon-badge {
+        .footer-france-badge {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -1370,19 +1370,15 @@
         <div class="container">
             <a href="index.html" class="navbar-logo">
                 <div class="logo-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 5v14h10"></path>
                     </svg>
                 </div>
-                <span>izi Facturation <span class="logo-badge">Lyon</span></span>
+                <span>IZI</span>
             </a>
 
             <ul class="navbar-links">
-                <li><a href="#problemes">Pourquoi iziFacture</a></li>
+                <li><a href="#problemes">Pourquoi IZI</a></li>
                 <li><a href="#fonctionnalites">Fonctionnalités</a></li>
                 <li><a href="comment-ca-marche.html">Comment ça marche</a></li>
                 <li><a href="#tarifs">Tarifs</a></li>
@@ -1409,7 +1405,7 @@
         <a href="#fonctionnalites" class="mobile-link">Fonctionnalités</a>
         <a href="comment-ca-marche.html" class="mobile-link">Comment ça marche</a>
         <a href="#tarifs" class="mobile-link">Tarifs</a>
-        <a href="#temoignages" class="mobile-link">Témoignages Lyon</a>
+        <a href="#temoignages" class="mobile-link">Témoignages</a>
         <a href="auth.html" class="btn btn-primary" style="margin-top: 10px;">Accéder au Dashboard</a>
     </div>
 
@@ -1426,7 +1422,7 @@
                     </div>
 
                     <h1 class="hero-title reveal delay-1">
-                        La facturation simple pour les <span class="text-gradient">sociétés lyonnaises</span>.
+                        La facturation simple pour les <span class="text-gradient">sociétés françaises</span>.
                     </h1>
 
                     <p class="hero-subtitle reveal delay-2">
@@ -1452,7 +1448,7 @@
                             <div class="avatar" style="background:#4C1D95;">AG</div>
                         </div>
                         <p class="trust-text">
-                            Adopté par <strong>+1 200 artisans, TPE & PME</strong> de la Métropole de Lyon
+                            Adopté par <strong>+1 200 artisans, TPE & PME</strong> en France
                         </p>
                     </div>
                 </div>
@@ -1469,7 +1465,7 @@
                                 </div>
                                 <div class="mockup-search">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <span>app.izifacture.fr/dashboard/lyon-rhone</span>
+                                    <span>app.izi.fr/dashboard/france</span>
                                 </div>
                                 <span style="font-size:11px; font-weight:700; color:var(--purple-700);">EUR (€)</span>
                             </div>
@@ -1488,17 +1484,17 @@
                                     </div>
                                 </div>
 
-                                <!-- List of real Lyon invoices -->
+                                <!-- List of real Paris invoices -->
                                 <div class="mockup-invoice-list">
                                     <div class="mockup-list-header">
-                                        <span>Factures récentes (RCS Lyon)</span>
+                                        <span>Factures récentes (RCS Paris)</span>
                                         <span style="color:var(--purple-600);">Factur-X OK</span>
                                     </div>
 
                                     <div class="mockup-row">
                                         <div class="client-info">
                                             <span class="client-name">Bouchon Le Garet</span>
-                                            <span class="client-loc">Lyon 1er (Presqu'île)</span>
+                                            <span class="client-loc">Paris 1er</span>
                                         </div>
                                         <span class="badge-status paid">Payée</span>
                                         <span class="amount-box">1 420,00 €</span>
@@ -1507,7 +1503,7 @@
                                     <div class="mockup-row">
                                         <div class="client-info">
                                             <span class="client-name">Agence Confluence Digital</span>
-                                            <span class="client-loc">Lyon 2ème (Confluence)</span>
+                                            <span class="client-loc">Paris 2e</span>
                                         </div>
                                         <span class="badge-status pending">En attente (J-3)</span>
                                         <span class="amount-box">3 850,00 €</span>
@@ -1516,7 +1512,7 @@
                                     <div class="mockup-row">
                                         <div class="client-info">
                                             <span class="client-name">Rhône Rénovation BTP</span>
-                                            <span class="client-loc">Villeurbanne / Lyon 6ème</span>
+                                            <span class="client-loc">Paris 6e</span>
                                         </div>
                                         <span class="badge-status paid">Payée</span>
                                         <span class="amount-box">6 200,00 €</span>
@@ -1560,7 +1556,7 @@
         <div class="container">
             <div class="text-center">
                 <span class="section-tag reveal">Le constat</span>
-                <h2 class="section-title reveal delay-1">Pourquoi les entrepreneurs lyonnais perdent du temps</h2>
+                <h2 class="section-title reveal delay-1">Pourquoi les entrepreneurs français perdent du temps</h2>
                 <p class="section-subtitle mx-auto reveal delay-2">
                     Entre les relances clients, les erreurs de TVA et les nouvelles obligations légales 2026, la gestion administrative devient un frein à votre croissance.
                 </p>
@@ -1583,7 +1579,7 @@
                     </div>
                     <h3>Retards de paiement et trésorerie bloquée</h3>
                     <p>
-                        Sans suivi automatique, vos factures s'accumulent chez vos clients à Lyon et en région. Vos relances manuelles prennent des heures et créent des tensions de trésorerie.
+                        Sans suivi automatique, vos factures s'accumulent chez vos clients à Paris et en région. Vos relances manuelles prennent des heures et créent des tensions de trésorerie.
                     </p>
                 </div>
 
@@ -1607,7 +1603,7 @@
                 <span class="section-tag reveal">Fonctionnalités Clés</span>
                 <h2 class="section-title reveal delay-1">La puissance d'un ERP, la simplicité en plus</h2>
                 <p class="section-subtitle mx-auto reveal delay-2">
-                    Conçu spécialement pour les indépendants, consultants, agences, commerces et artisans de la région lyonnaise.
+                    Conçu spécialement pour les indépendants, consultants, agences, commerces et artisans de la région française.
                 </p>
             </div>
 
@@ -1666,7 +1662,7 @@
                 <div class="step-item reveal">
                     <div class="step-circle">1</div>
                     <h3>Créez votre compte</h3>
-                    <p>Renseignez votre SIRET lyonnais en 30 secondes. Vos informations légales sont préremplies automatiquement.</p>
+                    <p>Renseignez votre SIRET français en 30 secondes. Vos informations légales sont préremplies automatiquement.</p>
                 </div>
 
                 <div class="step-item reveal delay-1">
@@ -1691,12 +1687,12 @@
         </div>
     </section>
 
-    <!-- ====== SECTION TÉMOIGNAGES LYONNAIS ====== -->
+    <!-- ====== SECTION TÉMOIGNAGES ====== -->
     <section class="testimonials" id="temoignages">
         <div class="container">
             <div class="text-center">
                 <span class="section-tag reveal" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.2);">Témoignages</span>
-                <h2 class="section-title reveal delay-1" style="color:white;">Ce que disent les entrepreneurs lyonnais</h2>
+                <h2 class="section-title reveal delay-1" style="color:white;">Ce que disent les entrepreneurs français</h2>
                 <p class="section-subtitle mx-auto reveal delay-2" style="color:rgba(255,255,255,0.8);">Rejoignez les dirigeants de TPE et indépendants qui ont simplifié leur facturation.</p>
             </div>
 
@@ -1704,13 +1700,13 @@
                 <div class="testimonial-card reveal">
                     <div class="testimonial-stars">★★★★★</div>
                     <blockquote>
-                        « En tant qu'agence web à Confluence, on passait un temps fou sur la gestion des acomptes et relances. Avec iziFacture, nos clients paient deux fois plus vite et nos factures sont magnifiques. »
+                        « En tant qu'agence web à Confluence, on passait un temps fou sur la gestion des acomptes et relances. Avec IZI, nos clients paient deux fois plus vite et nos factures sont magnifiques. »
                     </blockquote>
                     <div class="author-box">
                         <div class="author-avatar" style="background:linear-gradient(135deg, #A855F7, #6D28D9);">AL</div>
                         <div>
                             <div class="author-name">Alexandre Lambert</div>
-                            <div class="author-role">Fondateur, Studio Lumina (Lyon 2e)</div>
+                            <div class="author-role">Fondateur, Studio Lumina (Paris 2e)</div>
                         </div>
                     </div>
                 </div>
@@ -1718,13 +1714,13 @@
                 <div class="testimonial-card reveal delay-1">
                     <div class="testimonial-stars">★★★★★</div>
                     <blockquote>
-                        « Artisan électricien sur la Métropole de Lyon, l'application m'a sauvé. Je fais mes devis depuis mon utilitaire sur smartphone et la TVA 10%/20% se calcule sans que j'aie à réfléchir. »
+                        « Artisan électricien sur la France, l'application m'a sauvé. Je fais mes devis depuis mon utilitaire sur smartphone et la TVA 10%/20% se calcule sans que j'aie à réfléchir. »
                     </blockquote>
                     <div class="author-box">
                         <div class="author-avatar" style="background:linear-gradient(135deg, #10B981, #059669);">SM</div>
                         <div>
                             <div class="author-name">Stéphane Mercier</div>
-                            <div class="author-role">Gérant, Rhône Volt Rénovation (Caluire / Lyon)</div>
+                            <div class="author-role">Gérant, Rhône Volt Rénovation (Paris)</div>
                         </div>
                     </div>
                 </div>
@@ -1732,13 +1728,13 @@
                 <div class="testimonial-card reveal delay-2">
                     <div class="testimonial-stars">★★★★★</div>
                     <blockquote>
-                        « Le tarif est ultra-compétitif comparé aux gros logiciels américains qui nous facturent 40€/mois pour des usines à gaz. iziFacture va droit au but et mon expert-comptable adore l'export FEC ! »
+                        « Le tarif est ultra-compétitif comparé aux gros logiciels américains qui nous facturent 40€/mois pour des usines à gaz. IZI va droit au but et mon expert-comptable adore l'export FEC ! »
                     </blockquote>
                     <div class="author-box">
                         <div class="author-avatar" style="background:linear-gradient(135deg, #F59E0B, #D97706);">CP</div>
                         <div>
                             <div class="author-name">Chloé Perrin</div>
-                            <div class="author-role">Consultante Marketing (Croix-Rousse, Lyon 4e)</div>
+                            <div class="author-role">Consultante Marketing (Croix-Rousse, Paris 4e)</div>
                         </div>
                     </div>
                 </div>
@@ -1799,11 +1795,11 @@
                     <a href="auth.html" class="btn btn-secondary">Créer mon compte gratuit</a>
                 </div>
 
-                <!-- PLAN PRO LYON (POPULAIRE) -->
+                <!-- PLAN PRO (POPULAIRE) -->
                 <div class="pricing-card featured reveal delay-1">
                     <div class="pricing-popular-tag">🔥 Recommandé TPE & Indépendants</div>
                     <div class="pricing-header">
-                        <h3>Pro Lyon</h3>
+                        <h3>Pro</h3>
                         <p>Pour les indépendants et professionnels qui veulent automatiser.</p>
                     </div>
                     <div class="price-box">
@@ -1846,7 +1842,7 @@
                 <div class="pricing-card reveal delay-2">
                     <div class="pricing-header">
                         <h3>Business & Équipe</h3>
-                        <p>Pour les PME lyonnaises avec plusieurs collaborateurs et experts.</p>
+                        <p>Pour les PME françaises avec plusieurs collaborateurs et experts.</p>
                     </div>
                     <div class="price-box">
                         <span class="price-amount">24,90</span>
@@ -1857,7 +1853,7 @@
                     <ul class="pricing-features-list">
                         <li>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <strong>Tout le plan Pro Lyon inclus</strong>
+                            <strong>Tout le plan Pro inclus</strong>
                         </li>
                         <li>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -1891,7 +1887,7 @@
     <section class="final-cta">
         <div class="container">
             <div class="cta-banner reveal">
-                <h2>Rejoignez les entreprises lyonnaises qui facturent sans stress</h2>
+                <h2>Rejoignez les entreprises françaises qui facturent sans stress</h2>
                 <p>Démarrez en moins de 2 minutes. 14 jours d'essai offerts, sans carte bancaire.</p>
                 <a href="dashboard.html" class="btn btn-white btn-lg">
                     Démarrer mon essai gratuit
@@ -1907,13 +1903,13 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <h3>
-                        <div class="logo-icon" style="width:32px; height:32px; border-radius:8px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        <div class="logo-icon" style="width:32px; height:32px; border-radius:50%;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14h10"></path></svg>
                         </div>
-                        iziFacture Lyon
+                        IZI
                     </h3>
                     <p>
-                        La solution moderne de facturation et de gestion pour les indépendants, TPE et PME de la Métropole de Lyon et d'Auvergne-Rhône-Alpes.
+                        La solution moderne de facturation et de gestion pour les indépendants, TPE et PME de toute la France.
                     </p>
                 </div>
 
@@ -1921,39 +1917,36 @@
                     <h4>Navigation</h4>
                     <ul>
                         <li><a href="index.html">Accueil</a></li>
-                        <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+                        <li><a href="index.html#fonctionnalites">Fonctionnalités</a></li>
                         <li><a href="comment-ca-marche.html">Comment ça marche</a></li>
-                        <li><a href="#tarifs">Tarifs</a></li>
-                        <li><a href="dashboard.html">Espace Client</a></li>
+                        <li><a href="tarifs.html">Tarifs</a></li>
+                        <li><a href="auth.html">Espace Client</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-col">
-                    <h4>Ressources & Support</h4>
+                    <h4>Ressources</h4>
                     <ul>
-                        <li><a href="comment-ca-marche.html#faq">Centre d'aide & FAQ</a></li>
-                        <li><a href="comment-ca-marche.html">Guide Factur-X 2026</a></li>
-                        <li><a href="dashboard.html">Créer une facture test</a></li>
-                        <li><a href="#">Contactez l'équipe Lyon</a></li>
+                        <li><a href="export-fec.html">Export FEC expert-comptable</a></li>
+                        <li><a href="tarifs.html">Nos abonnements</a></li>
+                        <li><a href="auth.html">Se connecter</a></li>
+                        <li><a href="mailto:contact@izifacture.fr">Nous contacter</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-col">
                     <h4>Légal & Sécurité</h4>
                     <ul>
-                        <li><a href="#">Mentions Légales</a></li>
-                        <li><a href="#">Politique de Confidentialité (RGPD)</a></li>
-                        <li><a href="#">Conditions Générales de Vente</a></li>
-                        <li><a href="#">Hébergement sécurisé France</a></li>
+                        <li><a href="mentions-legales.html">Mentions Légales</a></li>
+                        <li><a href="confidentialite.html">Politique de Confidentialité (RGPD)</a></li>
+                        <li><a href="cgv.html">Conditions Générales de Vente</a></li>
                     </ul>
                 </div>
             </div>
 
             <div class="footer-bottom">
-                <p>© 2026 iziFacture France. Tous droits réservés.</p>
-                <div class="footer-lyon-badge">
-                    <span>🦁 Fait avec passion pour l'écosystème lyonnais</span>
-                </div>
+                <p>© 2026 IZI France. Tous droits réservés.</p>
+                
             </div>
         </div>
     </footer>
@@ -2080,3 +2073,5 @@
     </script>
 </body>
 </html>
+
+

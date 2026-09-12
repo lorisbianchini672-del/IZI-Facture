@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Paramètres entreprise — izi Facturation</title>
+    <title>Paramètres entreprise — IZI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,10 +23,18 @@
 </head>
 <body>
 <div class="layout">
-    <aside class="sidebar"><a class="brand" href="index.html">izi Facturation <small style="color:#7c3aed">Lyon</small></a><nav class="nav"><a href="dashboard.html">Tableau de bord</a><a href="devis.html">Factures & Devis</a><a href="clients.html">Répertoire Clients</a><a href="transactions-tva.html">Transactions & TVA</a><a href="export-fec.html">Export FEC Expert</a><a class="active" href="parametres.html">Paramètres</a></nav></aside>
+    <aside class="sidebar"><a class="brand" href="index.html">IZI</a><nav class="nav"><a href="dashboard.html">Tableau de bord</a><a href="devis.html">Factures & Devis</a><a href="clients.html">Répertoire Clients</a><a href="transactions-tva.html">Transactions & TVA</a><a href="export-fec.html">Export FEC Expert</a><a class="active" href="parametres.html">Paramètres</a></nav></aside>
     <main><h1>Paramètres entreprise</h1><p class="intro">Ces informations seront automatiquement reprises sur vos prochaines factures.</p><section class="card"><h2>Informations légales et professionnelles</h2><form id="settings-form"><div class="grid"><div class="field"><label for="legalName">Nom légal</label><input id="legalName" required></div><div class="field"><label for="registration">RC / SIRET</label><input id="registration"></div><div class="field"><label for="ninea">NINEA</label><input id="ninea"></div><div class="field"><label for="plater">PLATO</label><input id="plater"></div><div class="field"><label for="billingEmail">Email de factures pro</label><input id="billingEmail" type="email"></div><div class="field"><label for="phone">Téléphone pro</label><input id="phone" type="tel"></div><div class="field full"><label for="billingAddress">Adresse de facturation</label><input id="billingAddress"></div></div><div class="actions"><span id="message"></span><button type="submit">Enregistrer les paramètres</button></div></form></section></main>
 </div>
 <script>
+// Redirection automatique vers la connexion si la session a expiré
+const __rawFetch = window.fetch;
+window.fetch = (url, options) => __rawFetch(url, options).then(response => {
+    if (response.status === 401 && !String(url).includes('/api/auth/')) {
+        window.location.href = 'auth.html';
+    }
+    return response;
+});
 const fields = ['legalName', 'registration', 'ninea', 'plater', 'billingEmail', 'billingAddress', 'phone'];
 fetch('/api/settings').then(response => response.json()).then(settings => fields.forEach(field => { document.getElementById(field).value = settings[field] || ''; }));
 document.getElementById('settings-form').addEventListener('submit', async event => { event.preventDefault(); const values = Object.fromEntries(fields.map(field => [field, document.getElementById(field).value])); const response = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }); document.getElementById('message').textContent = response.ok ? 'Paramètres enregistrés.' : 'Impossible d’enregistrer.'; });

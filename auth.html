@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion — izi Facturation</title>
+  <title>Connexion — IZI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -35,14 +35,14 @@
 <body>
   <main class="auth-shell">
     <section class="brand-panel">
-      <a href="index.html">izi Facturation <small>Lyon</small></a>
+      <a href="index.html">IZI</a>
       <h1>Votre espace de facturation, enfin simple.</h1>
       <p>Créez vos factures, suivez vos encaissements et gardez vos documents professionnels au même endroit.</p>
     </section>
     <section class="form-panel">
       <div class="tabs"><button class="tab active" data-mode="login">Se connecter</button><button class="tab" data-mode="register">Créer un compte</button></div>
-      <h2 id="title">Bienvenue</h2><p class="intro" id="intro">Accédez à votre espace client iziFacture.</p>
-      <form id="auth-form">
+      <h2 id="title">Bienvenue</h2><p class="intro" id="intro">Accédez à votre espace client IZI.</p>
+      <form id="auth-form" novalidate>
         <label id="name-field" hidden>Nom de l'entreprise ou prénom<input id="name" autocomplete="organization" /></label>
         <label>Email professionnel<input id="email" type="email" autocomplete="email" required /></label>
         <label>Mot de passe<input id="password" type="password" minlength="8" autocomplete="current-password" required /></label>
@@ -65,7 +65,7 @@
       nameField.hidden = mode !== 'register';
       document.getElementById('name').required = mode === 'register';
       title.textContent = mode === 'register' ? 'Créer votre compte' : 'Bienvenue';
-      intro.textContent = mode === 'register' ? 'Commencez à gérer vos factures en quelques secondes.' : 'Accédez à votre espace client iziFacture.';
+      intro.textContent = mode === 'register' ? 'Créez votre compte : un email de confirmation vous sera envoyé.' : 'Accédez à votre espace client IZI.';
       submit.textContent = mode === 'register' ? 'Créer mon compte' : 'Se connecter';
       message.textContent = '';
     }));

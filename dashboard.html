@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espace Client — izi Facturation Lyon Dashboard</title>
-    <meta name="description" content="Tableau de bord de facturation pour les entreprises lyonnaises. Suivi du chiffre d'affaires, factures Factur-X, relances d'impayés et TVA.">
+    <title>Espace Client — IZI Dashboard</title>
+    <meta name="description" content="Tableau de bord de facturation pour les entreprises françaises. Suivi du chiffre d'affaires, factures Factur-X, relances d'impayés et TVA.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -112,13 +112,13 @@
         .brand-icon {
             width: 38px;
             height: 38px;
-            background: var(--bg-gradient);
-            border-radius: 10px;
+            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
         }
 
         .brand-text {
@@ -1133,11 +1133,10 @@
     <aside class="sidebar" id="sidebar">
         <a href="index.html" class="sidebar-brand">
             <div class="brand-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14h10"></path></svg>
             </div>
             <div>
-                <span class="brand-text">izi Facturation</span>
-                <span class="brand-badge">Lyon</span>
+                <span class="brand-text">IZI</span>
             </div>
         </a>
 
@@ -1180,7 +1179,7 @@
                 <div class="user-avatar">IF</div>
                 <div>
                     <div class="user-name">Mon Entreprise</div>
-                    <div class="user-role">Lyon • Plan Pro</div>
+                    <div class="user-role">Paris • Plan Pro</div>
                 </div>
             </div>
         </div>
@@ -1216,7 +1215,7 @@
         <main class="content-container">
             <div class="dashboard-header">
                 <div>
-                    <h1>Tableau de bord — Métropole de Lyon</h1>
+                    <h1>Tableau de bord — France</h1>
                     <p>Gestion en temps réel • Conforme Réforme Factur-X 2026</p>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -1390,12 +1389,12 @@
                 <!-- Breakdown card -->
                 <div class="breakdown-card">
                     <div class="card-title-bar">
-                        <h3>Répartition Clients Lyon</h3>
+                        <h3>Répartition Clients Paris</h3>
                         <span style="font-size:12px; color:var(--gray-400);">Septembre</span>
                     </div>
                     <div>
                         <div class="breakdown-item">
-                            <div><span class="breakdown-dot" style="background:#7C3AED;"></span>Agences & Startups (Confluence)</div>
+                            <div><span class="breakdown-dot" style="background:#7C3AED;"></span>Agences & Startups </div>
                             <span class="mono font-bold">45%</span>
                         </div>
                         <div class="breakdown-item">
@@ -1403,7 +1402,7 @@
                             <span class="mono font-bold">30%</span>
                         </div>
                         <div class="breakdown-item">
-                            <div><span class="breakdown-dot" style="background:#F59E0B;"></span>Commerces & Bouchons (Presqu'île)</div>
+                            <div><span class="breakdown-dot" style="background:#F59E0B;"></span>Commerces & Bouchons </div>
                             <span class="mono font-bold">25%</span>
                         </div>
                     </div>
@@ -1450,7 +1449,7 @@
                                 <td>
                                     <div class="client-meta">
                                         <span class="client-name-bold">Bouchon Le Garet</span>
-                                        <span class="client-sub">Lyon 1er (Presqu'île)</span>
+                                        <span class="client-sub">Paris 1er</span>
                                     </div>
                                 </td>
                                 <td>01/09/2026</td>
@@ -1469,7 +1468,7 @@
                                 <td>
                                     <div class="client-meta">
                                         <span class="client-name-bold">Agence Confluence Digital</span>
-                                        <span class="client-sub">Lyon 2ème (Quai Rambaud)</span>
+                                        <span class="client-sub">Paris 2e (Quai Rambaud)</span>
                                     </div>
                                 </td>
                                 <td>28/08/2026</td>
@@ -1488,7 +1487,7 @@
                                 <td>
                                     <div class="client-meta">
                                         <span class="client-name-bold">Rhône Rénovation BTP</span>
-                                        <span class="client-sub">Villeurbanne / Lyon 6e</span>
+                                        <span class="client-sub">Paris 6e</span>
                                     </div>
                                 </td>
                                 <td>20/08/2026</td>
@@ -1507,7 +1506,7 @@
                                 <td>
                                     <div class="client-meta">
                                         <span class="client-name-bold">Café des Canuts</span>
-                                        <span class="client-sub">Lyon 4ème (Croix-Rousse)</span>
+                                        <span class="client-sub">Paris 4e (Croix-Rousse)</span>
                                     </div>
                                 </td>
                                 <td>10/08/2026</td>
@@ -1525,8 +1524,8 @@
                                 <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-094</td>
                                 <td>
                                     <div class="client-meta">
-                                        <span class="client-name-bold">Tech Lyon Part-Dieu SAS</span>
-                                        <span class="client-sub">Lyon 3ème (Boulevard Vivier Merle)</span>
+                                        <span class="client-name-bold">Tech Paris Part-Dieu SAS</span>
+                                        <span class="client-sub">Paris 3e (Boulevard Vivier Merle)</span>
                                     </div>
                                 </td>
                                 <td>05/08/2026</td>
@@ -1545,7 +1544,7 @@
                                 <td>
                                     <div class="client-meta">
                                         <span class="client-name-bold">Cabinet Meunier Avocats</span>
-                                        <span class="client-sub">Lyon 6ème (Foch)</span>
+                                        <span class="client-sub">Paris 6e (Foch)</span>
                                     </div>
                                 </td>
                                 <td>02/08/2026</td>
@@ -1568,7 +1567,7 @@
     <div class="modal-overlay" id="invoice-modal">
         <div class="modal-card">
             <button class="modal-close" onclick="closeInvoiceModal()">✕</button>
-            <h2>Créer une Facture Conforme (RCS Lyon)</h2>
+            <h2>Créer une Facture Conforme (RCS Paris)</h2>
             <p style="font-size:13.5px; color:var(--gray-500); margin-top:4px;">Génération automatique au format Factur-X & calcul de TVA</p>
 
             <form id="invoice-form" onsubmit="handleCreateInvoice(event)">
@@ -1584,7 +1583,7 @@
 
                     <div class="form-group full">
                         <label>Client (Nom ou SIRET)</label>
-                        <input type="text" id="form-client" placeholder="Ex: Restaurant Paul Bocuse, Agence Lyon 6e..." required>
+                        <input type="text" id="form-client" placeholder="Ex: Restaurant Paul Bocuse, Agence Paris 2e..." required>
                     </div>
 
                     <div class="form-group full">
@@ -1638,6 +1637,14 @@
 
     <!-- JAVASCRIPT -->
     <script>
+        // Redirection automatique vers la connexion si la session a expiré
+        const __rawFetch = window.fetch;
+        window.fetch = (url, options) => __rawFetch(url, options).then(response => {
+            if (response.status === 401 && !String(url).includes('/api/auth/')) {
+                window.location.href = 'auth.html';
+            }
+            return response;
+        });
         // Toggle mobile sidebar
         const menuBtn = document.getElementById('menu-btn');
         const sidebar = document.getElementById('sidebar');
@@ -1680,8 +1687,8 @@
                 10: [{ type: "red", text: "⚠️ 1 450 € Échéance Dépassée (Confluence Media)" }],
                 12: [{ type: "amber", text: "⏳ 3 850 € Échéance Facture (Rhône BTP)" }],
                 15: [{ type: "purple", text: "📄 Déclaration TVA CA3 mensuelle" }],
-                20: [{ type: "green", text: "✓ 6 200 € Prévu Encaissement (TechLyon SAS)" }],
-                25: [{ type: "amber", text: "⏳ 2 100 € Échéance Facture (Grand Hôtel Lyon)" }],
+                20: [{ type: "green", text: "✓ 6 200 € Prévu Encaissement (TechParis SAS)" }],
+                25: [{ type: "amber", text: "⏳ 2 100 € Échéance Facture (Grand Hôtel Paris)" }],
                 28: [{ type: "purple", text: "🧾 Émission Factures Récurrentes Septembre" }]
             },
             7: { // Août 2026
@@ -1840,7 +1847,25 @@
         // Initialize calendar on page load
         document.addEventListener('DOMContentLoaded', () => {
             renderCalendar();
+            verifyStripePayment();
         });
+
+        // Vérification du paiement Stripe au retour du checkout
+        async function verifyStripePayment() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('payment') !== 'success') return;
+            const sessionId = params.get('session_id');
+            if (!sessionId) return;
+            try {
+                const res = await fetch(`/api/checkout/verify?session_id=${encodeURIComponent(sessionId)}`);
+                const data = await res.json();
+                if (data.status === 'paid') {
+                    showToast(`Paiement confirmé — abonnement ${data.plan} activé 🎉`);
+                }
+            } catch (e) { /* silencieux */ }
+            // Nettoyage de l'URL
+            window.history.replaceState({}, '', window.location.pathname);
+        }
 
         // Period Dropdown Switcher
         function changePeriod(period) {
@@ -2073,7 +2098,7 @@
                 <td>
                     <div class="client-meta">
                         <span class="client-name-bold">${client}</span>
-                        <span class="client-sub">Lyon (Nouveau client)</span>
+                        <span class="client-sub">Paris (Nouveau client)</span>
                     </div>
                 </td>
                 <td>05/09/2026</td>

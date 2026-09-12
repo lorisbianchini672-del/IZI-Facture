@@ -2,7 +2,7 @@
 
 ## 1. Résumé de l'application
 
-iziFacture est une application web française de facturation destinée aux TPE, PME, indépendants et artisans de la Métropole de Lyon.
+iziFacture est une application web française de facturation destinée aux TPE, PME, indépendants et artisans en France.
 
 L'application permet de :
 
@@ -31,7 +31,7 @@ Le projet est actuellement une application locale / prototype fonctionnel. Le ba
 - Landing page avec présentation du produit, fonctionnalités, tarifs et témoignages.
 - Navigation vers le guide, le dashboard et les tarifs.
 - Menu responsive pour mobile.
-- Plans tarifaires : Gratuit, Pro Lyon et Business & Équipe.
+- Plans tarifaires : Gratuit, Pro et Business & Équipe.
 - Les plans Pro et Business appellent `/api/checkout` pour créer une session Stripe Checkout.
 
 ### Dashboard

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transactions & Déclaration TVA — izi Facturation Lyon</title>
-    <meta name="description" content="Suivi des transactions, encaissements et calcul de la déclaration de TVA (20%, 10%, 5.5%) pour les sociétés lyonnaises.">
+    <title>Transactions & Déclaration TVA — IZI</title>
+    <meta name="description" content="Suivi des transactions, encaissements et calcul de la déclaration de TVA (20%, 10%, 5.5%) pour les sociétés françaises.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -106,13 +106,13 @@
         .brand-icon {
             width: 38px;
             height: 38px;
-            background: var(--bg-gradient);
-            border-radius: 10px;
+            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
         }
 
         .brand-text {
@@ -449,11 +449,10 @@
     <aside class="sidebar" id="sidebar">
         <a href="index.html" class="sidebar-brand">
             <div class="brand-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14h10"></path></svg>
             </div>
             <div>
-                <span class="brand-text">izi Facturation</span>
-                <span class="brand-badge">Lyon</span>
+                <span class="brand-text">IZI</span>
             </div>
         </a>
 
@@ -492,7 +491,7 @@
                 <div class="user-avatar">IF</div>
                 <div>
                     <div class="user-name">Mon Entreprise</div>
-                    <div class="user-role">Lyon • Plan Pro</div>
+                    <div class="user-role">Paris • Plan Pro</div>
                 </div>
             </div>
         </div>
@@ -560,7 +559,7 @@
                     <div>
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                             <span style="font-weight:800; font-size:15px; color:var(--purple-900);">Synthèse Déclaration CA3</span>
-                            <span style="font-size:11px; background:#DEF7EC; color:#03543F; padding:2px 8px; border-radius:var(--radius-full); font-weight:700;">Prêt SIE Lyon</span>
+                            <span style="font-size:11px; background:#DEF7EC; color:#03543F; padding:2px 8px; border-radius:var(--radius-full); font-weight:700;">Prêt SIE Paris</span>
                         </div>
                         <div class="ca3-line">
                             <span style="color:var(--gray-600);">Ligne 01 - Chiffre d'Affaires HT :</span>
@@ -605,7 +604,7 @@
                             <tr>
                                 <th>Date Réception</th>
                                 <th>Réf. Facture</th>
-                                <th>Émetteur (Client Lyon)</th>
+                                <th>Émetteur (Client Paris)</th>
                                 <th>Moyen de Règlement</th>
                                 <th>Montant HT</th>
                                 <th>Taux TVA</th>
@@ -617,7 +616,7 @@
                             <tr>
                                 <td>01/09/2026</td>
                                 <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-098</td>
-                                <td><strong>Bouchon Le Garet</strong> (Lyon 1er)</td>
+                                <td><strong>Bouchon Le Garet</strong> (Paris 1er)</td>
                                 <td><span class="payment-method-pill">💳 Carte Bancaire (Stripe)</span></td>
                                 <td class="mono">1 183,33 €</td>
                                 <td class="mono">20%</td>
@@ -641,7 +640,7 @@
                             <tr>
                                 <td>05/08/2026</td>
                                 <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-094</td>
-                                <td><strong>Tech Lyon Part-Dieu SAS</strong> (Lyon 3e)</td>
+                                <td><strong>Tech Paris Part-Dieu SAS</strong> (Paris 3e)</td>
                                 <td><span class="payment-method-pill">🏦 Virement SEPA Direct</span></td>
                                 <td class="mono">8 500,00 €</td>
                                 <td class="mono">20%</td>
@@ -653,7 +652,7 @@
                             <tr>
                                 <td>28/07/2026</td>
                                 <td class="mono font-bold" style="color:var(--purple-700);">FAC-2026-091</td>
-                                <td><strong>Studio Lumina</strong> (Lyon 2e)</td>
+                                <td><strong>Studio Lumina</strong> (Paris 2e)</td>
                                 <td><span class="payment-method-pill">💳 Carte Bancaire</span></td>
                                 <td class="mono">2 400,00 €</td>
                                 <td class="mono">20%</td>

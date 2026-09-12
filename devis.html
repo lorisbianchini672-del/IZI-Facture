@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Création Devis & Facture — izi Facturation Lyon</title>
+    <title>Création Devis & Facture — IZI</title>
     <meta name="description" content="Éditeur interactif de factures et devis conformes Factur-X 2026 avec prévisualisation en direct et calcul de TVA automatique.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -102,13 +102,13 @@
         .brand-icon {
             width: 38px;
             height: 38px;
-            background: var(--bg-gradient);
-            border-radius: 10px;
+            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
         }
 
         .brand-text {
@@ -596,11 +596,10 @@
     <aside class="sidebar" id="sidebar">
         <a href="index.html" class="sidebar-brand">
             <div class="brand-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14h10"></path></svg>
             </div>
             <div>
-                <span class="brand-text">izi Facturation</span>
-                <span class="brand-badge">Lyon</span>
+                <span class="brand-text">IZI</span>
             </div>
         </a>
 
@@ -643,7 +642,7 @@
                 <div class="user-avatar">IF</div>
                 <div>
                     <div class="user-name">Mon Entreprise</div>
-                    <div class="user-role">Lyon • Plan Pro</div>
+                    <div class="user-role">Paris • Plan Pro</div>
                 </div>
             </div>
         </div>
@@ -689,11 +688,11 @@
                     <div class="form-group">
                         <label>Client destinataire</label>
                         <select id="doc-client" onchange="updatePreview()">
-                            <option value="Bouchon Le Garet (Lyon 1er)">Bouchon Le Garet (Lyon 1er)</option>
-                            <option value="Agence Confluence Digital (Lyon 2e)">Agence Confluence Digital (Lyon 2e)</option>
+                            <option value="Bouchon Le Garet (Paris 1er)">Bouchon Le Garet (Paris 1er)</option>
+                            <option value="Agence Confluence Digital (Paris 2e)">Agence Confluence Digital (Paris 2e)</option>
                             <option value="Rhône Rénovation BTP (Villeurbanne)">Rhône Rénovation BTP (Villeurbanne)</option>
                             <option value="Café des Canuts (Croix-Rousse)">Café des Canuts (Croix-Rousse)</option>
-                            <option value="Tech Lyon Part-Dieu (Lyon 3e)">Tech Lyon Part-Dieu (Lyon 3e)</option>
+                            <option value="Tech Paris Part-Dieu (Paris 3e)">Tech Paris Part-Dieu (Paris 3e)</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -763,8 +762,8 @@
                             <div class="mono font-bold" style="color:var(--gray-500); margin-top:4px;" id="preview-doc-num">#FAC-2026-099</div>
                         </div>
                         <div style="text-align:right;">
-                            <div id="company-name" style="font-weight:800; font-size:16px; color:var(--purple-700);">iziFacture SAS</div>
-                            <div id="company-details" style="font-size:11.5px; color:var(--gray-500);">RC / SIRET : 849 203 118 00024<br>RCS Lyon • TVA FR 84 849203118</div>
+                            <div id="company-name" style="font-weight:800; font-size:16px; color:var(--purple-700);">IZI SAS</div>
+                            <div id="company-details" style="font-size:11.5px; color:var(--gray-500);">RC / SIRET : 849 203 118 00024<br>RCS Paris • TVA FR 84 849203118</div>
                         </div>
                     </div>
 
@@ -772,7 +771,7 @@
                         <div>
                             <div style="font-size:11px; text-transform:uppercase; color:var(--gray-400); font-weight:700;">Facturé à :</div>
                             <div style="font-weight:700; color:var(--gray-900);" id="preview-client">Bouchon Le Garet</div>
-                            <div style="color:var(--gray-500);">Métropole de Lyon</div>
+                            <div style="color:var(--gray-500);">France</div>
                         </div>
                         <div style="text-align:right;">
                             <div><strong>Émission :</strong> <span id="preview-date">05/09/2026</span></div>
@@ -832,6 +831,14 @@
     </div>
 
     <script>
+        // Redirection automatique vers la connexion si la session a expiré
+        const __rawFetch = window.fetch;
+        window.fetch = (url, options) => __rawFetch(url, options).then(response => {
+            if (response.status === 401 && !String(url).includes('/api/auth/')) {
+                window.location.href = 'auth.html';
+            }
+            return response;
+        });
         let currentType = 'FACTURE';
 
         function setDocType(type) {
