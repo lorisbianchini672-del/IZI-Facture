@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test",
+    "check": "for f in server.js db.js index.js lib/*.js test/*.js scripts/*.js; do node --check \"$f\" || exit 1; done && echo 'Syntaxe : OK'"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
