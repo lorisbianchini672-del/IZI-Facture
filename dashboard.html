@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Espace Client — IZI Dashboard</title>
     <meta name="description" content="Tableau de bord de facturation pour les entreprises françaises. Suivi du chiffre d'affaires, factures Factur-X, relances d'impayés et TVA.">
@@ -112,13 +112,19 @@
         .brand-icon {
             width: 38px;
             height: 38px;
-            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
-            border-radius: 50%;
+            border-radius: 11px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-icon img {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         .brand-text {
@@ -192,6 +198,22 @@
             padding: 16px;
             border-top: 1px solid var(--gray-100);
             background: var(--gray-50);
+        }
+
+        .sidebar-mail {
+            display: block;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-100);
+            color: var(--purple, #7c3aed);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .sidebar-mail:hover {
+            text-decoration: underline;
         }
 
         .user-card {
@@ -1133,7 +1155,7 @@
     <aside class="sidebar" id="sidebar">
         <a href="index.html" class="sidebar-brand">
             <div class="brand-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14h10"></path></svg>
+                <img src="logo.svg" alt="IZI Facture" width="38" height="38">
             </div>
             <div>
                 <span class="brand-text">IZI</span>
@@ -1182,6 +1204,7 @@
                     <div class="user-role">Paris • Plan Pro</div>
                 </div>
             </div>
+            <a class="sidebar-mail" href="mailto:izifacture@gmail.com">izifacture@gmail.com</a>
         </div>
     </aside>
 
@@ -1637,6 +1660,14 @@
 
     <!-- JAVASCRIPT -->
     <script>
+        // Échappe toute donnée dynamique avant interpolation dans innerHTML :
+        // neutralise <, >, &, " et ' (XSS stocké via nom client, numéro, etc.)
+        function esc(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[ch]);
+        }
+
         // Redirection automatique vers la connexion si la session a expiré
         const __rawFetch = window.fetch;
         window.fetch = (url, options) => __rawFetch(url, options).then(response => {
@@ -1786,7 +1817,7 @@
             if (events && events.length > 0) {
                 eventsEl.innerHTML = events.map(ev => {
                     let tagClass = ev.type === 'green' ? 'success' : (ev.type === 'amber' || ev.type === 'red' ? 'pending' : 'purple');
-                    return `<span class="event-tag ${tagClass}">${ev.text}</span>`;
+                    return `<span class="event-tag ${tagClass}">${esc(ev.text)}</span>`;
                 }).join('');
             } else {
                 eventsEl.innerHTML = `
@@ -1952,7 +1983,11 @@
         }
 
         function invoiceActionsMarkup(key) {
-            return `<div class="invoice-actions"><button class="invoice-actions-trigger" aria-label="Actions de la facture" onclick="toggleInvoiceMenu(event, '${key}')">•••</button><div class="invoice-actions-menu" id="actions-${key}"><button onclick="viewInvoiceByKey('${key}')">Voir le détail</button><button onclick="editInvoiceByKey('${key}')">Modifier</button><button onclick="toggleStatusMenu(event, '${key}')">Changer le statut <span style="float:right">›</span></button><div class="invoice-status-submenu" id="status-${key}"><button onclick="changeInvoiceStatus('${key}', 'BROUILLON')">Brouillon</button><button onclick="changeInvoiceStatus('${key}', 'ENVOYEE')">Envoyée</button><button onclick="changeInvoiceStatus('${key}', 'PAYEE')">Payée</button><button onclick="changeInvoiceStatus('${key}', 'RETARD')">En retard</button></div><button class="danger" onclick="deleteInvoice('${key}')">Supprimer</button></div></div>`;
+            // L'identifiant est injecté dans des attributs onclick : seuls les
+            // caractères sûrs pour un id technique sont conservés, toute autre
+            // valeur (guillemets, parenthèses) est exclue → pas d'évasion JS.
+            const id = String(key ?? '').replace(/[^A-Za-z0-9_-]/g, '');
+            return `<div class="invoice-actions"><button class="invoice-actions-trigger" aria-label="Actions de la facture" onclick="toggleInvoiceMenu(event, '${id}')">•••</button><div class="invoice-actions-menu" id="actions-${id}"><button onclick="viewInvoiceByKey('${id}')">Voir le détail</button><button onclick="editInvoiceByKey('${id}')">Modifier</button><button onclick="toggleStatusMenu(event, '${id}')">Changer le statut <span style="float:right">›</span></button><div class="invoice-status-submenu" id="status-${id}"><button onclick="changeInvoiceStatus('${id}', 'BROUILLON')">Brouillon</button><button onclick="changeInvoiceStatus('${id}', 'ENVOYEE')">Envoyée</button><button onclick="changeInvoiceStatus('${id}', 'PAYEE')">Payée</button><button onclick="changeInvoiceStatus('${id}', 'RETARD')">En retard</button></div><button class="danger" onclick="deleteInvoice('${id}')">Supprimer</button></div></div>`;
         }
 
         function enhanceLegacyInvoiceRows() {
@@ -1985,7 +2020,7 @@
                 const row = document.createElement('tr');
                 row.dataset.status = invoice.status;
                 row.dataset.invoiceId = invoice.id;
-                row.innerHTML = `<td class="mono font-bold" style="color:var(--purple-700);">${invoice.number}</td><td><div class="client-meta"><span class="client-name-bold">${invoice.client}</span><span class="client-sub">Nouvelle facture</span></div></td><td>${invoice.issueDate}</td><td>${invoice.dueDate || '—'}</td><td class="mono">${invoice.totalHT}</td><td class="mono font-bold">${invoice.totalTTC}</td><td><span class="badge invoice-status-badge ${statusBadgeClass(invoice.status)}">● ${statusLabel(invoice.status)}</span></td><td style="text-align:right;">${invoiceActionsMarkup(invoice.id)}</td>`;
+                row.innerHTML = `<td class="mono font-bold" style="color:var(--purple-700);">${esc(invoice.number)}</td><td><div class="client-meta"><span class="client-name-bold">${esc(invoice.client)}</span><span class="client-sub">Nouvelle facture</span></div></td><td>${esc(invoice.issueDate)}</td><td>${esc(invoice.dueDate || '—')}</td><td class="mono">${esc(invoice.totalHT)}</td><td class="mono font-bold">${esc(invoice.totalTTC)}</td><td><span class="badge invoice-status-badge ${statusBadgeClass(invoice.status)}">● ${esc(statusLabel(invoice.status))}</span></td><td style="text-align:right;">${invoiceActionsMarkup(invoice.id)}</td>`;
                 tbody.prepend(row);
             });
         }
@@ -2094,10 +2129,10 @@
             const newRow = document.createElement('tr');
             newRow.dataset.status = 'ATTENTE';
             newRow.innerHTML = `
-                <td class="mono font-bold" style="color:var(--purple-700);">${num}</td>
+                <td class="mono font-bold" style="color:var(--purple-700);">${esc(num)}</td>
                 <td>
                     <div class="client-meta">
-                        <span class="client-name-bold">${client}</span>
+                        <span class="client-name-bold">${esc(client)}</span>
                         <span class="client-sub">Paris (Nouveau client)</span>
                     </div>
                 </td>
@@ -2107,9 +2142,14 @@
                 <td class="mono font-bold">${ttc.toLocaleString('fr-FR', {minimumFractionDigits:2})} €</td>
                 <td><span class="badge badge-pending">● En attente</span></td>
                 <td style="text-align:right;">
-                    <button class="action-icon-btn" onclick="showToast('Facture ${num} envoyée à ${client} !');">Envoyée</button>
+                    <button class="action-icon-btn" data-toast="Facture ${esc(num)} envoyée à ${esc(client)} !">Envoyée</button>
                 </td>
             `;
+            // Pas d'onclick interpolé : les données passent par data-*, jamais
+            // par du JS inline (vecteur d'injection de script direct).
+            newRow.querySelector('[data-toast]').addEventListener('click', event => {
+                showToast(/** @type {HTMLElement} */ (event.currentTarget).dataset.toast || '');
+            });
             tbody.insertBefore(newRow, tbody.firstChild);
 
             closeInvoiceModal();

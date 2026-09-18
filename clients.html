@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Répertoire Clients — IZI</title>
     <meta name="description" content="Gestion du répertoire clients et entreprises pour les professionnels français. Fiches SIRET, historique des factures et suivi des encours.">
@@ -107,13 +107,19 @@
         .brand-icon {
             width: 38px;
             height: 38px;
-            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
-            border-radius: 50%;
+            border-radius: 11px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-icon img {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         .brand-text {
@@ -187,6 +193,22 @@
             padding: 16px;
             border-top: 1px solid var(--gray-100);
             background: var(--gray-50);
+        }
+
+        .sidebar-mail {
+            display: block;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-100);
+            color: var(--purple, #7c3aed);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .sidebar-mail:hover {
+            text-decoration: underline;
         }
 
         .user-card {
@@ -528,7 +550,7 @@
     <aside class="sidebar" id="sidebar">
         <a href="index.html" class="sidebar-brand">
             <div class="brand-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14h10"></path></svg>
+                <img src="logo.svg" alt="IZI Facture" width="38" height="38">
             </div>
             <div>
                 <span class="brand-text">IZI</span>
@@ -573,6 +595,7 @@
                     <div class="user-role">Paris • Plan Pro</div>
                 </div>
             </div>
+            <a class="sidebar-mail" href="mailto:izifacture@gmail.com">izifacture@gmail.com</a>
         </div>
     </aside>
 
@@ -791,6 +814,13 @@
     <div class="toast" id="toast">Notification</div>
 
     <script>
+        // Échappe toute donnée dynamique avant interpolation dans innerHTML (anti-XSS)
+        function esc(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[ch]);
+        }
+
         function filterClients() {
             const input = document.getElementById('client-search').value.toLowerCase();
             const rows = document.querySelectorAll('#clients-table tbody tr');
@@ -820,16 +850,16 @@
             row.innerHTML = `
                 <td>
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <div class="client-avatar-sq" style="background:#FAF5FF; color:#7C3AED;">${name.substring(0,2).toUpperCase()}</div>
+                        <div class="client-avatar-sq" style="background:#FAF5FF; color:#7C3AED;">${esc(name.substring(0,2).toUpperCase())}</div>
                         <div>
-                            <div style="font-weight:700; color:var(--gray-900);">${name}</div>
-                            <div style="font-size:12px; color:var(--gray-400);">${address}</div>
+                            <div style="font-weight:700; color:var(--gray-900);">${esc(name)}</div>
+                            <div style="font-size:12px; color:var(--gray-400);">${esc(address)}</div>
                         </div>
                     </div>
                 </td>
-                <td class="mono" style="font-size:12.5px;">${siret}<br><span style="color:var(--gray-400);">RCS Paris</span></td>
-                <td>${contact}</td>
-                <td>${email}</td>
+                <td class="mono" style="font-size:12.5px;">${esc(siret)}<br><span style="color:var(--gray-400);">RCS Paris</span></td>
+                <td>${esc(contact)}</td>
+                <td>${esc(email)}</td>
                 <td class="mono font-bold">0,00 €</td>
                 <td><span class="badge-client badge-prospect">Nouveau</span></td>
                 <td style="text-align:right;">

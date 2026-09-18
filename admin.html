@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Administration — IZI</title>
     <style>
@@ -24,13 +24,24 @@
         th { color: #687386; font-size: 12px; text-transform: uppercase; }
         .status { color: #087f5b; font-weight: 700; }
         .error { color: #b42318; }
+        .admin-head { display: flex; align-items: center; gap: 16px; }
+        .admin-head img { width: 46px; height: 46px; border-radius: 12px; display: block; flex: none; }
+        .admin-mail { margin-top: 6px; font-size: 13px; }
+        .admin-mail a { color: #7137d8; font-weight: 700; text-decoration: none; }
+        .admin-mail a:hover { text-decoration: underline; }
         @media (max-width: 680px) { body { padding: 18px; } .metrics { grid-template-columns: 1fr; } input { min-width: 0; width: 100%; } }
     </style>
 </head>
 <body>
 <main>
-    <h1>Commandes & revenus</h1>
-    <p>Vue privée du gérant. Les données proviennent des confirmations Stripe.</p>
+    <header class="admin-head">
+        <img src="logo.svg" alt="IZI Facture" width="46" height="46">
+        <div>
+            <h1>Commandes & revenus</h1>
+            <p>Vue privée du gérant. Les données proviennent des confirmations Stripe.</p>
+            <p class="admin-mail">Contact : <a href="mailto:izifacture@gmail.com">izifacture@gmail.com</a></p>
+        </div>
+    </header>
     <div class="toolbar">
         <input id="token" type="password" placeholder="ADMIN_TOKEN">
         <button id="load">Charger les commandes</button>
@@ -49,6 +60,13 @@
     </section>
 </main>
 <script>
+    // Échappe toute donnée dynamique avant interpolation dans innerHTML (anti-XSS)
+    function esc(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[ch]);
+    }
+
     const tokenInput = document.getElementById('token');
     const message = document.getElementById('message');
     document.getElementById('load').addEventListener('click', async () => {
@@ -62,7 +80,7 @@
             document.getElementById('orders-count').textContent = paid.length;
             document.getElementById('pending').textContent = orders.filter(order => order.status === 'pending').length;
             document.getElementById('revenue').textContent = (paid.reduce((sum, order) => sum + order.amount, 0) / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
-            document.getElementById('orders').innerHTML = orders.length ? orders.map(order => `<tr><td>${new Date(order.paidAt || order.createdAt).toLocaleDateString('fr-FR')}</td><td>${order.plan}</td><td>${order.customerEmail || 'En attente'}</td><td>${(order.amount / 100).toLocaleString('fr-FR', { style: 'currency', currency: (order.currency || 'eur').toUpperCase() })}</td><td class="status">${order.status}</td></tr>`).join('') : '<tr><td colspan="5">Aucune commande.</td></tr>';
+            document.getElementById('orders').innerHTML = orders.length ? orders.map(order => `<tr><td>${esc(new Date(order.paidAt || order.createdAt).toLocaleDateString('fr-FR'))}</td><td>${esc(order.plan)}</td><td>${esc(order.customerEmail || 'En attente')}</td><td>${esc((order.amount / 100).toLocaleString('fr-FR', { style: 'currency', currency: (order.currency || 'eur').toUpperCase() }))}</td><td class="status">${esc(order.status)}</td></tr>`).join('') : '<tr><td colspan="5">Aucune commande.</td></tr>';
             message.textContent = 'Données actualisées';
         } catch (error) { message.textContent = error.message; message.className = 'error'; }
     });
