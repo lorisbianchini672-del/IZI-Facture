@@ -9,14 +9,19 @@
 //   2. Fichiers locaux (développement) : repli dans data/*.json
 //      avec la même isolation par utilisateur.
 // ============================================================
-require('dotenv').config();
+// Configuration : lib/env.js charge le .env (chemin absolu) et écarte les
+// valeurs d'exemple. Ce module ne journalise ni ne renvoie jamais de secret.
+const env = require('./lib/env');
+const { databaseError } = require('./lib/errors');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const useSupabase = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+const SUPABASE_URL = env.get('SUPABASE_URL');
+const SUPABASE_SERVICE_ROLE_KEY = env.get('SUPABASE_SERVICE_ROLE_KEY');
+// Les deux variables fonctionnent par paire : une valeur d'exemple ne doit
+// jamais activer un backend Supabase factice.
+const useSupabase = !env.isPlaceholder(SUPABASE_URL) && !env.isPlaceholder(SUPABASE_SERVICE_ROLE_KEY);
 
 let supabaseClient = null;
 if (useSupabase) {
@@ -33,17 +38,43 @@ const invoicesFile = path.join(dataDirectory, 'invoices.json');
 const settingsFile = path.join(dataDirectory, 'settings.json');
 const ordersFile = path.join(dataDirectory, 'orders.json');
 
+// Enveloppe une erreur technique : le client ne reçoit qu'un message générique,
+// le détail (Supabase, disque) reste dans les journaux du serveur.
+function dataError(error, action, file) {
+  const detail = error instanceof Error ? error.message : String(error);
+  const label = file ? `${action} ${path.basename(file)}` : action;
+  return databaseError(new Error(`${label} : ${detail}`));
+}
+
+// Contrôle du résultat d'une requête Supabase ({ data, error }).
+function check(error, action) {
+  if (error) throw dataError(new Error(error.message), action);
+}
+
+// Fichier absent = premier démarrage (valeur par défaut). Toute autre erreur
+// (JSON corrompu, permissions, disque) est remontée : la confondre avec un jeu
+// de données vide conduirait à écraser des données réelles.
 async function readJson(file, fallback) {
   try {
     return JSON.parse(await fs.readFile(file, 'utf8'));
-  } catch {
-    return fallback;
+  } catch (error) {
+    if (error?.code === 'ENOENT') return fallback;
+    throw dataError(error, 'Lecture impossible de', file);
   }
 }
 
+// Écriture atomique : le fichier de destination n'est remplacé qu'une fois le
+// contenu complet écrit (évite un fichier tronqué en cas d'incident).
 async function writeJson(file, value) {
-  await fs.mkdir(dataDirectory, { recursive: true });
-  await fs.writeFile(file, JSON.stringify(value, null, 2));
+  const temporary = `${file}.${process.pid}.${crypto.randomBytes(4).toString('hex')}.tmp`;
+  try {
+    await fs.mkdir(dataDirectory, { recursive: true });
+    await fs.writeFile(temporary, JSON.stringify(value, null, 2));
+    await fs.rename(temporary, file);
+  } catch (error) {
+    await fs.rm(temporary, { force: true }).catch(() => {});
+    throw dataError(error, 'Écriture impossible de', file);
+  }
 }
 
 // Nom du backend actif (affiché par /api/health).
@@ -56,7 +87,7 @@ async function findUserByEmail(email) {
   if (useSupabase) {
     const { data, error } = await supabaseClient
       .from('profiles').select('*').eq('email', email).maybeSingle();
-    if (error) throw new Error(error.message);
+    check(error, 'Recherche utilisateur par email');
     return data;
   }
   const users = await readJson(usersFile, []);
@@ -67,7 +98,7 @@ async function findUserById(id) {
   if (useSupabase) {
     const { data, error } = await supabaseClient
       .from('profiles').select('*').eq('id', id).maybeSingle();
-    if (error) throw new Error(error.message);
+    check(error, 'Recherche utilisateur par identifiant');
     return data;
   }
   const users = await readJson(usersFile, []);
@@ -83,7 +114,7 @@ async function createUser(user) {
       password_hash: user.passwordHash,
       created_at: user.createdAt
     });
-    if (error) throw new Error(error.message);
+    check(error, 'Création utilisateur');
     return user;
   }
   const users = await readJson(usersFile, []);
@@ -106,7 +137,7 @@ async function createSession({ tokenHash, userId, createdAt, expiresAt }) {
       user_id: userId,
       expires_at: expiresAt
     });
-    if (error) throw new Error(error.message);
+    check(error, 'Création de session');
     return;
   }
   const sessions = await readJson(sessionsFile, []);
@@ -123,7 +154,7 @@ async function findSessionByTokenHash(tokenHash) {
   if (useSupabase) {
     const { data, error } = await supabaseClient
       .from('sessions').select('*').eq('token_hash', tokenHash).maybeSingle();
-    if (error) throw new Error(error.message);
+    check(error, 'Lecture de session');
     if (!data) return null;
     return { userId: data.user_id, expiresAt: new Date(data.expires_at) };
   }
@@ -136,7 +167,7 @@ async function deleteSessionByTokenHash(tokenHash) {
   if (useSupabase) {
     const { error } = await supabaseClient
       .from('sessions').delete().eq('token_hash', tokenHash);
-    if (error) throw new Error(error.message);
+    check(error, 'Suppression de session');
     return;
   }
   const sessions = await readJson(sessionsFile, []);
@@ -144,13 +175,37 @@ async function deleteSessionByTokenHash(tokenHash) {
 }
 
 // ---------- Factures ----------
+/**
+ * Normalise une colonne jsonb : selon le driver, elle peut arriver en objet
+ * ou en chaîne JSON. Toute valeur inexploitable devient `null` plutôt que de
+ * propager une forme inattendue dans l'application.
+ * @param {unknown} value
+ * @returns {Record<string, unknown> | null}
+ */
+function asObject(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return /** @type {Record<string, unknown>} */ (value);
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return /** @type {Record<string, unknown>} */ (parsed);
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 async function listInvoices(userId) {
   if (useSupabase) {
     const { data, error } = await supabaseClient
       .from('invoices').select('data').eq('user_id', userId)
       .order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
-    return (data || []).map(row => row.data);
+    check(error, 'Liste des factures');
+    return (data || []).map(row => asObject(row.data)).filter(Boolean);
   }
   const invoices = await readJson(invoicesFile, []);
   return invoices
@@ -164,7 +219,7 @@ async function saveInvoice(invoice, userId) {
       { id: invoice.id, user_id: userId, data: invoice, updated_at: new Date() },
       { onConflict: 'id' }
     );
-    if (error) throw new Error(error.message);
+    check(error, 'Enregistrement de facture');
     return invoice;
   }
   const invoices = await readJson(invoicesFile, []);
@@ -182,13 +237,13 @@ async function updateInvoiceStatus(invoiceId, status, userId) {
   if (useSupabase) {
     const { data, error } = await supabaseClient
       .from('invoices').select('data').eq('id', invoiceId).eq('user_id', userId).maybeSingle();
-    if (error) throw new Error(error.message);
+    check(error, 'Lecture de facture');
     if (!data) return null;
     const updated = { ...data.data, status, updatedAt: new Date().toISOString() };
     const { error: updateError } = await supabaseClient
       .from('invoices').update({ data: updated, updated_at: new Date() })
       .eq('id', invoiceId).eq('user_id', userId);
-    if (updateError) throw new Error(updateError.message);
+    check(updateError, 'Mise à jour du statut de facture');
     return updated;
   }
   const invoices = await readJson(invoicesFile, []);
@@ -205,20 +260,20 @@ async function updateInvoiceByNumber(number, status, userId) {
   if (useSupabase) {
     const { data, error } = await supabaseClient
       .from('invoices').select('*').eq('user_id', userId);
-    if (error) throw new Error(error.message);
+    check(error, 'Recherche de facture par numéro');
     const row = (data || []).find(item => item.data?.number === number);
     if (row) {
       const updated = { ...row.data, status, updatedAt: new Date().toISOString() };
       const { error: updateError } = await supabaseClient
         .from('invoices').update({ data: updated, updated_at: new Date() }).eq('id', row.id);
-      if (updateError) throw new Error(updateError.message);
+      check(updateError, 'Mise à jour du statut par numéro');
       return updated;
     }
     const invoice = { id: crypto.randomUUID(), number, status, type: 'FACTURE', createdAt: new Date().toISOString() };
     const { error: insertError } = await supabaseClient.from('invoices').insert({
       id: invoice.id, user_id: userId, data: invoice, updated_at: new Date()
     });
-    if (insertError) throw new Error(insertError.message);
+    check(insertError, 'Création de facture par numéro');
     return invoice;
   }
   const invoices = await readJson(invoicesFile, []);
@@ -239,6 +294,63 @@ async function updateInvoiceByNumber(number, status, userId) {
   return invoice;
 }
 
+// ---------- Lecture unitaire d'une facture ----------
+/**
+ * Récupère une facture par identifiant interne, isolée par utilisateur.
+ * @param {string} id
+ * @param {string} userId
+ * @returns {Promise<Record<string, unknown> | null>}
+ */
+async function getInvoice(id, userId) {
+  if (useSupabase) {
+    const { data, error } = await supabaseClient
+      .from('invoices').select('data').eq('id', id).eq('user_id', userId).maybeSingle();
+    check(error, 'Lecture de facture');
+    return data ? asObject(data.data) : null;
+  }
+  const invoices = await readJson(invoicesFile, []);
+  const found = invoices.find(item => item.id === id && (item.userId === userId || item.userId == null));
+  return found ? asObject(found) : null;
+}
+
+// ---------- Numérotation séquentielle (section critique) ----------
+// File de promesses : les allocations sont sérialisées dans le processus.
+// Deux validations simultanées ne peuvent pas obtenir le même ordinal, et
+// la numérotation reste continue (aucun trou) — exigence comptable.
+let numberAllocationQueue = Promise.resolve();
+
+/**
+ * Alloue le prochain numéro définitif d'un utilisateur pour l'année donnée.
+ * La séquence est annuelle, continue et sans trou ; le mutex interne garantit
+ * l'unicité au sein du processus (déploiement multi-instances : l'unicité
+ * doit être garantie par une contrainte d'unicité en base).
+ * @param {string} userId
+ * @param {Date} [now] date de référence (année de la séquence)
+ * @param {string} [prefix] préfixe métier
+ * @returns {Promise<{ year: number, ordinal: number, number: string }>}
+ */
+async function allocateInvoiceNumber(userId, now = new Date(), prefix = 'FAC') {
+  const { nextSequentialNumber } = require('./lib/invoice-lifecycle');
+  const allocation = numberAllocationQueue.then(async () => {
+    if (useSupabase) {
+      const { data, error } = await supabaseClient
+        .from('invoices').select('data').eq('user_id', userId);
+      check(error, 'Allocation de numéro de facture');
+      const numbers = (data || []).map(row => asObject(row.data)?.number).filter(Boolean);
+      return nextSequentialNumber(/** @type {string[]} */ (numbers), now.getFullYear(), prefix);
+    }
+    const invoices = await readJson(invoicesFile, []);
+    const numbers = invoices
+      .filter(invoice => invoice.userId === userId || invoice.userId == null)
+      .map(invoice => String(invoice.number || ''));
+    return nextSequentialNumber(numbers, now.getFullYear(), prefix);
+  });
+  // La file continue même en cas d'échec : un incident d'allocation ne doit
+  // pas bloquer définitivement les validations suivantes.
+  numberAllocationQueue = allocation.then(() => undefined, () => undefined);
+  return allocation;
+}
+
 // ---------- Paramètres entreprise ----------
 function normalizeSettingsContainer(stored) {
   if (stored && typeof stored === 'object' && !Array.isArray(stored)
@@ -255,8 +367,8 @@ async function getSettings(userId) {
   if (useSupabase) {
     const { data, error } = await supabaseClient
       .from('settings').select('data').eq('user_id', userId).maybeSingle();
-    if (error) throw new Error(error.message);
-    return data?.data || {};
+    check(error, 'Lecture des paramètres');
+    return asObject(data?.data) || {};
   }
   const stored = await readJson(settingsFile, null);
   if (!stored) return {};
@@ -270,7 +382,7 @@ async function saveSettings(userId, settings) {
       { user_id: userId, data: settings, updated_at: new Date() },
       { onConflict: 'user_id' }
     );
-    if (error) throw new Error(error.message);
+    check(error, 'Enregistrement des paramètres');
     return settings;
   }
   const stored = await readJson(settingsFile, {});
@@ -285,8 +397,8 @@ async function listOrders() {
   if (useSupabase) {
     const { data, error } = await supabaseClient
       .from('orders').select('data').order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
-    return (data || []).map(row => row.data);
+    check(error, 'Liste des commandes');
+    return (data || []).map(row => asObject(row.data)).filter(Boolean);
   }
   return readJson(ordersFile, []);
 }
@@ -297,7 +409,7 @@ async function saveOrder(order) {
       { id: order.id, data: order, created_at: new Date() },
       { onConflict: 'id' }
     );
-    if (error) throw new Error(error.message);
+    check(error, 'Enregistrement de commande');
     return;
   }
   const orders = await readJson(ordersFile, []);
@@ -308,7 +420,30 @@ async function saveOrder(order) {
   await writeJson(ordersFile, orders);
 }
 
+/**
+ * Met à jour le statut d'une commande identifiée par sa session Stripe.
+ * Fonctionne sur les DEUX backends (Supabase comme fichiers locaux) : cette
+ * mise à jour était auparavant silencieusement ignorée en mode Supabase.
+ * @param {string} checkoutSessionId
+ * @param {string} status
+ */
 async function updateOrderStatusBySessionId(checkoutSessionId, status) {
+  if (useSupabase) {
+    const { data, error } = await supabaseClient
+      .from('orders').select('id, data')
+      .eq('data->>checkoutSessionId', checkoutSessionId)
+      .maybeSingle();
+    check(error, 'Recherche de commande par session');
+    const order = data ? asObject(data.data) : null;
+    if (!data || !order) return;
+    const { error: updateError } = await supabaseClient
+      .from('orders')
+      .update({ data: { ...order, status }, updated_at: new Date() })
+      .eq('id', data.id);
+    check(updateError, 'Mise à jour du statut de commande');
+    return;
+  }
+
   const orders = await readJson(ordersFile, []);
   const order = orders.find(item => item.checkoutSessionId === checkoutSessionId);
   if (order) {
@@ -326,9 +461,11 @@ module.exports = {
   findSessionByTokenHash,
   deleteSessionByTokenHash,
   listInvoices,
+  getInvoice,
   saveInvoice,
   updateInvoiceStatus,
   updateInvoiceByNumber,
+  allocateInvoiceNumber,
   getSettings,
   saveSettings,
   listOrders,

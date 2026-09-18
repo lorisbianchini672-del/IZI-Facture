@@ -4,29 +4,71 @@
 // rate limiting, isolation par utilisateur, jeton admin
 // comparé en temps constant.
 // ============================================================
-require('dotenv').config();
 const express = require('express');
 const Stripe = require('stripe');
 const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
 const crypto = require('node:crypto');
+// lib/env.js est le SEUL point d'entrée de la configuration : il charge le .env
+// (chemin absolu) et audit les secrets. Aucun autre module n'appelle dotenv.
+const env = require('./lib/env');
+const { createDefaultLogger } = require('./lib/logger');
+const {
+  unauthorized,
+  badRequest,
+  notFound,
+  conflict,
+  tooManyRequests,
+  serviceUnavailable,
+  databaseError,
+  requestContext,
+  asyncRoute,
+  notFoundHandler,
+  createErrorHandler
+} = require('./lib/errors');
+const { createPublicStaticMiddleware } = require('./lib/assets');
+const v = require('./lib/validate');
+const money = require('./lib/money');
+const { withRetry, isRetryableError } = require('./lib/retry');
+const lifecycle = require('./lib/invoice-lifecycle');
 const db = require('./db');
 
 const app = express();
-const port = Number(process.env.PORT || 4242);
-const publicUrl = process.env.PUBLIC_URL || `http://localhost:${port}`;
-const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+const port = Number(env.get('PORT') || 4242);
+const publicUrl = env.get('PUBLIC_URL') || `http://localhost:${port}`;
+const isProduction = env.isProduction();
 
-const stripe = process.env.STRIPE_SECRET_KEY?.startsWith('sk_')
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+// Journalisation structurée : niveaux, contexte, rédaction des secrets.
+// LOG_LEVEL / LOG_FORMAT pilotent la verbosité et le format (JSON en production).
+const logger = createDefaultLogger();
+
+// Audit de la configuration. Par défaut le serveur démarre malgré une variable
+// manquante (le .env reste la source unique) : les routes dépendantes répondent
+// alors 503 et /api/health signale l'état. IZI_ENFORCE_ENV=1 rend le contrôle
+// bloquant pour un déploiement strict.
+const envReport = env.validateEnvironment({
+  logger,
+  enforce: env.isProduction() && env.isEnabled('IZI_ENFORCE_ENV')
+});
+if (!envReport.ok) {
+  logger.error('Configuration incomplète', { problems: envReport.problems });
+}
+
+// Un secret absent ou laissé en valeur d'exemple ne doit jamais activer un service.
+const stripeKey = env.get('STRIPE_SECRET_KEY');
+const stripe = stripeKey.startsWith('sk_') && !env.isPlaceholder(stripeKey)
+  ? new Stripe(stripeKey)
   : null;
 
-const mailer = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD
+const smtpPort = Number(env.get('SMTP_PORT') || 587);
+const smtpConfigured = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD']
+  .every(name => !env.isPlaceholder(env.get(name)));
+const mailer = smtpConfigured
   ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: Number(process.env.SMTP_PORT || 587) === 465,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
+      host: env.get('SMTP_HOST'),
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: env.get('SMTP_USER'), pass: env.get('SMTP_PASSWORD') }
     })
   : null;
 
@@ -97,23 +139,159 @@ const defaultSettings = {
 };
 
 // ---------- Utilitaires ----------
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const normalizeEmail = value => String(value || '').trim().toLowerCase();
-
 function normalizeInvoiceForClient(invoice) {
   const { userId, ...rest } = invoice;
   return rest;
 }
 
-function escapeHtml(value = '') {
-  return String(value).replace(/[&<>'"]/g, character => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#39;',
-    '"': '&quot;'
-  }[character]));
+/**
+ * Envoi SMTP isolé. Une panne transitoire est signalée au client par un 503
+ * explicite, le détail technique restant dans les journaux.
+ * Volontairement SANS reprise automatique : un message accepté puis perdu
+ * provoquerait un doublon de facture chez le client. On borne l'attente.
+ * @param {object} payload
+ * @param {{ requestId?: string, context?: string }} [options]
+ */
+async function sendMail(payload, { requestId = '-', context = 'email' } = {}) {
+  try {
+    return await mailer.sendMail(payload);
+  } catch (error) {
+    logger.error('Envoi SMTP impossible', {
+      requestId,
+      context,
+      retryable: isRetryableError(error),
+      cause: error
+    });
+    throw serviceUnavailable('Envoi d’email momentanément indisponible.', 'EMAIL_DELIVERY_FAILED');
+  }
 }
+
+/**
+ * Enveloppe un appel Stripe avec reprise sur panne transitoire.
+ * Les lectures et créations utilisent une clé d'idempotence : rejouer
+ * l'appel ne peut pas facturer ni créer deux fois la même session.
+ * @template T
+ * @param {() => Promise<T>} operation
+ * @param {{ requestId?: string, action: string }} options
+ * @returns {Promise<T>}
+ */
+async function stripeCall(operation, { requestId = '-', action }) {
+  try {
+    return await withRetry(operation, {
+      attempts: 3,
+      baseDelayMs: 250,
+      onRetry: ({ attempt, delayMs, error }) => logger.warn('Reprise d’appel Stripe', {
+        requestId,
+        action,
+        attempt,
+        delayMs,
+        cause: error
+      })
+    });
+  } catch (error) {
+    logger.error('Appel Stripe en échec', { requestId, action, cause: error });
+    throw serviceUnavailable('Paiement temporairement indisponible.', 'STRIPE_UNAVAILABLE');
+  }
+}
+
+// ---------- Schémas d'entrée API (validation stricte) ----------
+const INVOICE_STATUSES = ['BROUILLON', 'ENVOYEE', 'PAYEE', 'RETARD', 'ATTENTE'];
+const DOCUMENT_TYPES = ['FACTURE', 'DEVIS', 'RECURRENTE'];
+const EMPTY_OR_EMAIL = /^$|^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+
+const invoiceItemSchema = v.object({
+  description: v.string({ min: 1, max: 200, singleLine: true }),
+  quantity: v.number({ min: 0, max: 100000 }),
+  price: v.number({ min: -1000000, max: 1000000 }),
+  taxRate: v.number({ min: 0, max: 1 })
+});
+
+// Lignes issues de l'éditeur de devis : les champs numériques y sont encore
+// saisis en texte. `emptyAs` documente la valeur retenue pour un champ vidé
+// (jamais un NaN silencieux).
+const emailItemSchema = v.object({
+  description: v.string({ max: 200, singleLine: true }),
+  quantity: v.coerceNumber({ min: 0, max: 100000, emptyAs: 1 }),
+  price: v.coerceNumber({ min: -1000000, max: 1000000, emptyAs: 0 }),
+  taxRate: v.coerceNumber({ min: 0, max: 1, emptyAs: 0 })
+});
+
+const invoiceSchema = v.refine(
+  v.object({
+    number: v.string({ min: 1, max: 60, singleLine: true }),
+    client: v.string({ min: 1, max: 160, singleLine: true }),
+    issueDate: v.date(),
+    dueDate: v.date(),
+    items: v.array(invoiceItemSchema, { minLength: 1, maxLength: 200 }),
+    type: v.optional(v.enumeration(DOCUMENT_TYPES)),
+    totalHT: v.optional(v.money()),
+    totalTVA: v.optional(v.money()),
+    totalTTC: v.optional(v.money())
+  }),
+  body => {
+    const { issueDate, dueDate } = /** @type {{ issueDate: string, dueDate: string }} */ (body);
+    return dueDate >= issueDate;
+  },
+  { code: 'date_order', message: 'La date d’échéance doit être postérieure ou égale à la date d’émission.', path: 'dueDate' }
+);
+
+const schemas = {
+  register: v.object({
+    name: v.string({ min: 2, max: 80, singleLine: true }),
+    email: v.email(),
+    password: v.string({ min: 8, max: 128 })
+  }),
+  login: v.object({
+    email: v.email(),
+    password: v.string({ min: 1, max: 128 })
+  }),
+  settings: v.object({
+    legalName: v.optional(v.string({ min: 1, max: 120, singleLine: true })),
+    registration: v.optional(v.string({ max: 60, singleLine: true })),
+    ninea: v.optional(v.string({ max: 60, singleLine: true })),
+    plater: v.optional(v.string({ max: 60, singleLine: true })),
+    billingEmail: v.optional(v.string({ max: 254, singleLine: true, normalizer: 'lower', pattern: EMPTY_OR_EMAIL, patternMessage: 'Adresse email invalide.' })),
+    billingAddress: v.optional(v.string({ max: 200, singleLine: true })),
+    phone: v.optional(v.string({ max: 30, singleLine: true }))
+  }),
+  invoice: invoiceSchema,
+  invoiceStatus: v.object({ status: v.enumeration(INVOICE_STATUSES) }),
+  checkout: v.object({
+    plan: v.enumeration(Object.keys(plans)),
+    email: v.optional(v.email())
+  }),
+  invoiceEmail: v.object({
+    recipient: v.optional(v.email()),
+    clientEmail: v.optional(v.email()),
+    documentNumber: v.string({ min: 1, max: 60, singleLine: true }),
+    documentId: v.optional(v.string({ max: 60, singleLine: true })),
+    client: v.string({ min: 1, max: 160, singleLine: true }),
+    subject: v.optional(v.string({ max: 150, singleLine: true })),
+    message: v.optional(v.string({ max: 2000 })),
+    issueDate: v.optional(v.string({ max: 40, singleLine: true })),
+    dueDate: v.optional(v.string({ max: 40, singleLine: true })),
+    totalHT: v.optional(v.money()),
+    totalTVA: v.optional(v.money()),
+    totalTTC: v.optional(v.money()),
+    items: v.optional(v.array(emailItemSchema, { maxLength: 200 }))
+  })
+};
+
+/**
+ * Valide une entrée d'API et renvoie la version assainie.
+ * @template T
+ * @param {keyof typeof schemas} name
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {T}
+ */
+function parseInput(name, value, label) {
+  return v.validate(schemas[name], value, { label });
+}
+
+// L'échappement HTML provient d'une source unique (lib/validate.js) : utilisé
+// par les emails transactionnels ci-dessous.
+const escapeHtml = v.escapeHtml;
 
 // ---------- Sécurité ----------
 function securityHeaders(req, res, next) {
@@ -134,7 +312,7 @@ function authRateLimit(req, res, next) {
   current.count += 1;
   loginAttempts.set(key, current);
   if (current.count > 10) {
-    return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
+    return next(tooManyRequests('Trop de tentatives. Réessayez dans 15 minutes.', 'AUTH_RATE_LIMITED'));
   }
   next();
 }
@@ -145,45 +323,69 @@ function safeEqual(a, b) {
   return left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
+// Le jeton admin vient de .env uniquement ; une valeur absente ou d'exemple
+// ferme l'accès (401) au lieu de laisser passer.
 function requireAdmin(req, res, next) {
-  const expected = process.env.ADMIN_TOKEN;
-  if (!expected || expected === 'change-this-token' || !safeEqual(req.get('x-admin-token'), expected)) {
-    return res.status(401).json({ error: 'Accès administrateur requis.' });
+  const expected = env.get('ADMIN_TOKEN');
+  const provided = req.get('x-admin-token');
+  // Borne de longueur : évite de comparer des chaînes arbitrairement longues.
+  if (env.isPlaceholder(expected) || typeof provided !== 'string' || provided.length > 256
+      || !safeEqual(provided, expected)) {
+    return next(unauthorized('Accès administrateur requis.', 'ADMIN_REQUIRED'));
   }
   next();
 }
 
 async function requireAuth(req, res, next) {
   const token = getSessionToken(req);
-  if (!token) return res.status(401).json({ authenticated: false, error: 'Connexion requise.' });
+  if (!token) return next(unauthorized('Connexion requise.', 'AUTH_REQUIRED'));
   try {
     const session = await db.findSessionByTokenHash(hashToken(token));
     if (!session || session.expiresAt < new Date()) {
       clearSessionCookie(res);
-      return res.status(401).json({ authenticated: false, error: 'Session expirée. Reconnectez-vous.' });
+      return next(unauthorized('Session expirée. Reconnectez-vous.', 'SESSION_EXPIRED'));
     }
     const user = await db.findUserById(session.userId);
-    if (!user) return res.status(401).json({ authenticated: false, error: 'Utilisateur introuvable.' });
+    if (!user) return next(unauthorized('Utilisateur introuvable.', 'USER_NOT_FOUND'));
     req.userId = user.id;
     req.user = { id: user.id, name: user.name, email: user.email };
     next();
   } catch (error) {
-    res.status(500).json({ error: 'Erreur serveur lors de l’authentification.' });
+    // Le détail (Supabase, disque) reste dans les journaux serveur.
+    next(databaseError(error));
   }
 }
 
-// Capture les erreurs des handlers async (Express 4 ne le fait pas).
-const asyncRoute = handler => (req, res) => {
-  Promise.resolve(handler(req, res)).catch(error => {
-    console.error('API error:', error.message);
-    res.status(500).json({ error: 'Erreur serveur inattendue.' });
+// Journal d'accès : une ligne structurée par requête, corrélable par requestId.
+// Le niveau suit le statut HTTP pour que le monitoring puisse alerter seul.
+function accessLog(req, res, next) {
+  req.log = logger.child({ requestId: req.id });
+  const startedAt = process.hrtime.bigint();
+  res.on('finish', () => {
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
+    const level = res.statusCode >= 500 ? 'error' : (res.statusCode >= 400 ? 'warn' : 'debug');
+    req.log[level]('Requête HTTP', {
+      method: req.method,
+      path: String(req.originalUrl || '').split('?')[0],
+      status: res.statusCode,
+      durationMs: Math.round(durationMs)
+    });
   });
-};
+  next();
+}
 
 app.disable('x-powered-by');
+app.use(requestContext);
+app.use(accessLog);
 app.use(securityHeaders);
-app.use(express.json());
-app.use(express.static(__dirname));
+// La signature du webhook Stripe porte sur les octets BRUTS du corps : son
+// parseur doit être monté avant express.json(), qui consommerait le flux.
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+app.use(express.json({ limit: '1mb' }));
+// Liste blanche stricte : seules les ressources publiques du site sont servies.
+// data/*.json, db.js, lib/, scripts/ et les fichiers de configuration ne
+// peuvent plus être téléchargés.
+app.use(createPublicStaticMiddleware(__dirname));
 
 // ---------- Génération PDF ----------
 function createInvoicePdf(invoice) {
@@ -219,35 +421,46 @@ function createInvoicePdf(invoice) {
     document.moveDown().text(`Total HT : ${invoice.totalHT}`);
     document.text(`TVA : ${invoice.totalTVA}`);
     document.font('Helvetica-Bold').fontSize(14).text(`Total TTC : ${invoice.totalTTC}`);
-    document.font('Helvetica').fontSize(8).fillColor('#687386').text('Document généré électroniquement par IZI SAS — contact@izifacture.fr', 50, 750);
+    document.font('Helvetica').fontSize(8).fillColor('#687386').text('Document généré électroniquement par IZI SAS — izifacture@gmail.com', 50, 750);
     document.end();
   });
 }
 
 // ---------- Webhook Stripe ----------
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), asyncRoute(async (req, res) => {
-  if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
-    return res.status(503).send('Stripe webhook non configuré');
+app.post('/api/stripe/webhook', asyncRoute(async (req, res) => {
+  const webhookSecret = env.get('STRIPE_WEBHOOK_SECRET');
+  if (!stripe || env.isPlaceholder(webhookSecret)) {
+    throw serviceUnavailable('Paiement non configuré.', 'STRIPE_NOT_CONFIGURED');
+  }
+  if (typeof req.body !== 'string' && !Buffer.isBuffer(req.body)) {
+    throw badRequest('Corps de webhook illisible.', 'INVALID_WEBHOOK_BODY');
   }
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, req.get('stripe-signature'), process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(req.body, req.get('stripe-signature'), webhookSecret);
   } catch (error) {
-    return res.status(400).send(`Webhook invalide : ${error.message}`);
+    logger.warn('Signature de webhook refusée', { requestId: req.id, cause: error });
+    throw badRequest('Signature de webhook invalide.', 'INVALID_WEBHOOK_SIGNATURE');
   }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    await db.saveOrder({
-      id: session.id,
-      customerEmail: session.customer_details?.email || null,
-      plan: session.metadata?.plan || 'unknown',
-      amount: session.amount_total || 0,
-      currency: session.currency || 'eur',
-      status: 'paid',
-      paidAt: new Date().toISOString()
-    });
+    try {
+      await db.saveOrder({
+        id: session.id,
+        customerEmail: session.customer_details?.email || null,
+        plan: session.metadata?.plan || 'unknown',
+        amount: session.amount_total || 0,
+        currency: session.currency || 'eur',
+        status: 'paid',
+        paidAt: new Date().toISOString()
+      });
+    } catch (orderError) {
+      // On accuse réception pour éviter les retries infinis de Stripe,
+      // mais l'incident est tracé côté serveur.
+      logger.error('Commande payée non enregistrée', { requestId: req.id, cause: orderError });
+    }
   }
 
   res.json({ received: true });
@@ -255,22 +468,11 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
 
 // ---------- Authentification ----------
 app.post('/api/auth/register', authRateLimit, asyncRoute(async (req, res) => {
-  const { name, email, password } = req.body || {};
-  const displayName = String(name || '').trim();
-  const normalizedEmail = normalizeEmail(email);
-  const passwordValue = String(password || '');
+  const { name: displayName, email: normalizedEmail, password: passwordValue } =
+    parseInput('register', req.body, 'Inscription');
 
-  if (displayName.length < 2 || displayName.length > 80) {
-    return res.status(400).json({ error: 'Le nom doit contenir entre 2 et 80 caractères.' });
-  }
-  if (!EMAIL_RE.test(normalizedEmail)) {
-    return res.status(400).json({ error: 'Adresse email invalide.' });
-  }
-  if (passwordValue.length < 8 || passwordValue.length > 128) {
-    return res.status(400).json({ error: 'Le mot de passe doit contenir entre 8 et 128 caractères.' });
-  }
   if (await db.findUserByEmail(normalizedEmail)) {
-    return res.status(409).json({ error: 'Un compte existe déjà avec cet email.' });
+    throw conflict('Un compte existe déjà avec cet email.', 'EMAIL_ALREADY_USED');
   }
 
   const user = {
@@ -285,7 +487,7 @@ app.post('/api/auth/register', authRateLimit, asyncRoute(async (req, res) => {
 
   // ---- Email de confirmation d'inscription (au nom d'IZI) ----
   if (mailer) {
-    const from = process.env.MAIL_FROM || process.env.SMTP_USER;
+    const from = env.get('MAIL_FROM') || env.get('SMTP_USER');
     const loginUrl = `${publicUrl}/auth.html`;
     const dashboardUrl = `${publicUrl}/dashboard.html`;
     const cardCss = 'box-sizing:border-box;max-width:600px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;background:#ffffff00;color:#172033;border:1px solid #e9d5ff;border-radius:16px;overflow:hidden';
@@ -309,7 +511,7 @@ app.post('/api/auth/register', authRateLimit, asyncRoute(async (req, res) => {
           `Accéder à votre espace : ${dashboardUrl}`,
           `Connexion ultérieure : ${loginUrl}`,
           '',
-          'Pour toute question, notre service client se tient à votre disposition : contact@izifacture.fr',
+          'Pour toute question, notre service client se tient à votre disposition : izifacture@gmail.com',
           '',
           'Cordialement,',
           "L'équipe IZI"
@@ -331,12 +533,12 @@ app.post('/api/auth/register', authRateLimit, asyncRoute(async (req, res) => {
             <a href="${dashboardUrl}" style="display:inline-block;background:#5b21b6;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;padding:13px 26px;font-size:15px">Accéder à mon espace</a>
             <p style="font-size:13px;color:#6b7280;margin-top:12px">Connexion ultérieure : <a href="${loginUrl}" style="color:#7c3aed">${loginUrl}</a></p>
           </div>
-          <div style="background:#172033;color:#cbd5e1;text-align:center;padding:14px;font-size:12px">© 2026 IZI SAS — contact@izifacture.fr — Mentions légales disponibles sur notre site</div>
+          <div style="background:#172033;color:#cbd5e1;text-align:center;padding:14px;font-size:12px">© 2026 IZI SAS — izifacture@gmail.com — Mentions légales disponibles sur notre site</div>
         </div>`
       });
-      console.log(`Email de confirmation d'inscription envoyé à ${user.email}`);
+      req.log.info('Email de confirmation d’inscription envoyé');
     } catch (error) {
-      console.error(`Échec de l'envoi du mail de confirmation à ${user.email} : ${error.message}`);
+      req.log.error('Échec du mail de confirmation', { accountId: user.id, cause: error });
     }
 
     // Notification d'équipe (le compte "pro" IZI est prévenu de chaque inscription)
@@ -353,27 +555,29 @@ app.post('/api/auth/register', authRateLimit, asyncRoute(async (req, res) => {
             <p style="line-height:1.7"><strong>Nom :</strong> ${escapeHtml(user.name)}<br><strong>Email :</strong> ${escapeHtml(user.email)}<br><strong>Date :</strong> ${new Date().toISOString()}</p>
           </div>`
         });
-        console.log(`Notification d'inscription envoyée à l'équipe`);
+        req.log.info('Notification d’inscription équipe envoyée');
       } catch (error) {
-        console.error(`Échec de la notification équipe : ${error.message}`);
+        req.log.error('Échec de la notification équipe', { cause: error });
       }
     }
   } else {
-    console.log('SMTP non configuré : pas d\'email de confirmation envoyé');
+    req.log.warn('SMTP non configuré : aucun email de confirmation envoyé');
   }
 
   res.status(201).json({ user: { id: user.id, name: user.name, email: user.email } });
 }));
 
 app.post('/api/auth/login', authRateLimit, asyncRoute(async (req, res) => {
-  const { email, password } = req.body || {};
-  const normalizedEmail = normalizeEmail(email);
+  const { email: normalizedEmail, password: passwordValue } =
+    parseInput('login', req.body, 'Connexion');
   const user = await db.findUserByEmail(normalizedEmail);
-  const passwordValue = String(password || '');
   if (!user || !(await verifyPassword(passwordValue, user.passwordHash))) {
-    return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
+    // Message identique quel que soit le cas : pas d'énumération de comptes.
+    req.log.warn('Échec de connexion', { email: normalizedEmail });
+    throw unauthorized('Email ou mot de passe incorrect.', 'INVALID_CREDENTIALS');
   }
   await createSessionForUser(res, user.id);
+  req.log.info('Connexion réussie', { accountId: user.id });
   res.json({ user: { id: user.id, name: user.name, email: user.email } });
 }));
 
@@ -401,13 +605,10 @@ app.get('/api/settings', requireAuth, asyncRoute(async (req, res) => {
 }));
 
 app.put('/api/settings', requireAuth, asyncRoute(async (req, res) => {
-  const allowedKeys = ['legalName', 'registration', 'ninea', 'plater', 'billingEmail', 'billingAddress', 'phone'];
-  const clean = {};
-  for (const key of allowedKeys) {
-    if (typeof req.body?.[key] === 'string') clean[key] = req.body[key].slice(0, 200).trim();
-  }
+  const clean = parseInput('settings', req.body, 'Paramètres');
   const settings = { ...defaultSettings, ...clean };
   await db.saveSettings(req.userId, settings);
+  req.log.info('Paramètres entreprise enregistrés');
   res.json(settings);
 }));
 
@@ -418,137 +619,275 @@ app.get('/api/invoices', requireAuth, asyncRoute(async (req, res) => {
 }));
 
 app.post('/api/invoices', requireAuth, asyncRoute(async (req, res) => {
-  const { number, client, issueDate, dueDate, items = [], totalHT, totalTVA, totalTTC, type = 'FACTURE' } = req.body || {};
-  if (!number || !client || !issueDate || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'Numéro, client, date et au moins une prestation sont obligatoires.' });
+  const payload = parseInput('invoice', req.body, 'Facture');
+
+  // Les totaux sont RECALCULÉS côté serveur : le client ne fait pas foi en
+  // matière comptable. Un écart est journalisé, jamais rejeté en bloc.
+  const totals = money.computeTotals(payload.items);
+  const declared = { ht: payload.totalHT, tva: payload.totalTVA, ttc: payload.totalTTC };
+  const mismatch = /** @type {('ht'|'tva'|'ttc')[]} */ (['ht', 'tva', 'ttc']).some(key =>
+    declared[key] !== undefined && Math.abs(/** @type {number} */ (declared[key]) - totals[key]) > 0.01);
+  if (mismatch) {
+    req.log.warn('Totaux déclarés incohérents, recalcul serveur appliqué', {
+      declared,
+      computed: { ht: totals.ht, tva: totals.tva, ttc: totals.ttc }
+    });
   }
+
   const invoice = {
     id: crypto.randomUUID(),
-    number,
-    client,
-    issueDate,
-    dueDate,
-    items,
-    totalHT,
-    totalTVA,
-    totalTTC,
-    type,
+    number: payload.number,
+    client: payload.client,
+    issueDate: payload.issueDate,
+    dueDate: payload.dueDate,
+    items: payload.items,
+    // Chaînes prêtes à l'affichage (contrat de l'interface existante)…
+    totalHT: money.formatAmount(totals.ht),
+    totalTVA: money.formatAmount(totals.tva),
+    totalTTC: money.formatAmount(totals.ttc),
+    // …et montants numériques normalisés pour l'export comptable.
+    amounts: { ht: totals.ht, tva: totals.tva, ttc: totals.ttc, byRate: totals.byRate },
+    currency: 'EUR',
+    type: payload.type || 'FACTURE',
     status: 'BROUILLON',
     createdAt: new Date().toISOString(),
     userId: req.userId
   };
   const savedInvoice = await db.saveInvoice(invoice, req.userId);
+  req.log.info('Facture enregistrée', { invoiceId: invoice.id, amountTTC: totals.ttc });
   res.status(201).json(normalizeInvoiceForClient(savedInvoice));
 }));
 
-app.patch('/api/invoices/:id/status', requireAuth, asyncRoute(async (req, res) => {
-  const allowedStatuses = ['BROUILLON', 'ENVOYEE', 'PAYEE', 'RETARD', 'ATTENTE'];
-  const { status } = req.body || {};
-  if (!allowedStatuses.includes(status)) return res.status(400).json({ error: 'Statut de facture invalide.' });
+// Identifiant de facture : UUID interne ou numéro métier (clé d'idempotence).
+const invoiceIdSchema = v.string({ min: 1, max: 60, singleLine: true });
 
-  const updated = await db.updateInvoiceStatus(req.params.id, status, req.userId);
-  if (!updated) return res.status(404).json({ error: 'Facture introuvable.' });
+app.patch('/api/invoices/:id/status', requireAuth, asyncRoute(async (req, res) => {
+  const invoiceId = v.validate(invoiceIdSchema, req.params.id, { label: 'Identifiant de facture' });
+  const { status } = parseInput('invoiceStatus', req.body, 'Statut de facture');
+
+  // Machine à états : la transition est validée contre le statut réel et
+  // courant de la facture (pas contre une copie du client).
+  const existing = await db.getInvoice(invoiceId, req.userId);
+  if (!existing) throw notFound('Facture introuvable.');
+  lifecycle.assertTransition(String(existing.status || 'BROUILLON'), status);
+
+  const updated = await db.updateInvoiceStatus(invoiceId, status, req.userId);
+  if (!updated) throw notFound('Facture introuvable.');
+  req.log.info('Statut de facture modifié', { invoiceId, status });
   res.json(normalizeInvoiceForClient(updated));
 }));
 
 app.patch('/api/invoices/by-number/:number/status', requireAuth, asyncRoute(async (req, res) => {
-  const allowedStatuses = ['BROUILLON', 'ENVOYEE', 'PAYEE', 'RETARD', 'ATTENTE'];
-  const { status } = req.body || {};
-  if (!allowedStatuses.includes(status)) return res.status(400).json({ error: 'Statut de facture invalide.' });
+  const invoiceNumber = v.validate(invoiceIdSchema, req.params.number, { label: 'Numéro de facture' });
+  const { status } = parseInput('invoiceStatus', req.body, 'Statut de facture');
 
-  const updated = await db.updateInvoiceByNumber(req.params.number, status, req.userId);
+  // La transition est contrôlée sur la facture réellement trouvée.
+  const invoices = await db.listInvoices(req.userId);
+  const existing = invoices.find(invoice => invoice.number === invoiceNumber);
+  if (!existing) throw notFound('Facture introuvable.');
+  lifecycle.assertTransition(String(existing.status || 'BROUILLON'), status);
+
+  const updated = await db.updateInvoiceByNumber(invoiceNumber, status, req.userId);
+  if (!updated) throw notFound('Facture introuvable.');
+  req.log.info('Statut de facture modifié', { invoiceNumber, status });
   res.json(normalizeInvoiceForClient(updated));
+}));
+
+// ---------- Validation d'une facture (émission comptable) ----------
+// Passe un brouillon au statut ENVOYEE et lui alloue son numéro définitif,
+// séquentiel et sans trou. Après validation, le contenu est immuable.
+app.post('/api/invoices/:id/validate', requireAuth, asyncRoute(async (req, res) => {
+  const invoiceId = v.validate(invoiceIdSchema, req.params.id, { label: 'Identifiant de facture' });
+
+  const existing = await db.getInvoice(invoiceId, req.userId);
+  if (!existing) throw notFound('Facture introuvable.');
+  const currentStatus = String(existing.status || 'BROUILLON');
+  lifecycle.assertTransition(currentStatus, 'ENVOYEE');
+
+  // Numéro définitif : alloué dans la section critique de la couche données.
+  // Un brouillon créait un numéro libre (éditable) ; la facture émise, elle,
+  // porte un numéro de séquence irrévocable.
+  const allocation = await db.allocateInvoiceNumber(req.userId);
+  const issued = {
+    ...existing,
+    /** Numéro précédent (brouillon), conservé pour la traçabilité. */
+    draftNumber: existing.number !== allocation.number ? existing.number : undefined,
+    number: allocation.number,
+    status: 'ENVOYEE',
+    validatedAt: new Date().toISOString()
+  };
+  const saved = await db.saveInvoice(issued, req.userId);
+  req.log.info('Facture validée et émise', {
+    invoiceId,
+    number: issued.number,
+    draftNumber: issued.draftNumber,
+    totalTTC: issued.amounts?.ttc
+  });
+  res.json(normalizeInvoiceForClient(saved));
+}));
+
+// ---------- Édition de contenu (brouillon uniquement) ----------
+app.patch('/api/invoices/:id', requireAuth, asyncRoute(async (req, res) => {
+  const invoiceId = v.validate(invoiceIdSchema, req.params.id, { label: 'Identifiant de facture' });
+  const payload = parseInput('invoice', req.body, 'Facture');
+
+  const existing = await db.getInvoice(invoiceId, req.userId);
+  if (!existing) throw notFound('Facture introuvable.');
+  // Garde d'immuabilité : une facture émise ne se modifie pas, jamais.
+  lifecycle.assertContentEditable(existing);
+
+  const totals = money.computeTotals(payload.items);
+  const updated = {
+    ...existing,
+    number: payload.number,
+    client: payload.client,
+    issueDate: payload.issueDate,
+    dueDate: payload.dueDate,
+    items: payload.items,
+    totalHT: money.formatAmount(totals.ht),
+    totalTVA: money.formatAmount(totals.tva),
+    totalTTC: money.formatAmount(totals.ttc),
+    amounts: { ht: totals.ht, tva: totals.tva, ttc: totals.ttc, byRate: totals.byRate },
+    type: payload.type || existing.type || 'FACTURE'
+  };
+  const saved = await db.saveInvoice(updated, req.userId);
+  req.log.info('Brouillon de facture modifié', { invoiceId });
+  res.json(normalizeInvoiceForClient(saved));
 }));
 
 // ---------- Paiement Stripe (public) ----------
 app.post('/api/checkout', asyncRoute(async (req, res) => {
-  const { plan, email } = req.body || {};
+  const { plan, email: customerEmail } = parseInput('checkout', req.body, 'Paiement');
+  if (!stripe) throw serviceUnavailable('Paiement temporairement indisponible.', 'STRIPE_NOT_CONFIGURED');
   const selectedPlan = plans[plan];
-  if (!selectedPlan) return res.status(400).json({ error: 'Plan inconnu' });
-  if (!stripe) return res.status(503).json({ error: 'Stripe n’est pas encore configuré. Ajoutez STRIPE_SECRET_KEY dans .env.' });
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    customer_email: typeof email === 'string' && email ? email : undefined,
-    line_items: [{
-      price_data: {
-        currency: 'eur',
-        product_data: { name: selectedPlan.name, description: selectedPlan.description },
-        unit_amount: selectedPlan.amount,
-        recurring: { interval: 'month' }
-      },
-      quantity: 1
-    }],
-    metadata: { plan },
-    success_url: `${publicUrl}/dashboard.html?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${publicUrl}/index.html#tarifs`
-  });
+  // Clé d'idempotence stable sur toutes les tentatives de cette requête :
+  // un rejeu réseau ne peut pas créer deux sessions de paiement.
+  const idempotencyKey = `checkout-${req.id}-${crypto.randomUUID()}`;
 
-  await db.saveOrder({
-    id: crypto.randomUUID(),
-    checkoutSessionId: session.id,
-    plan,
-    amount: selectedPlan.amount,
-    currency: 'eur',
-    status: 'pending',
-    createdAt: new Date().toISOString()
-  });
+  // Appel réseau externe résilient : reprise + erreur 503 explicite.
+  const session = await stripeCall(
+    () => stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer_email: customerEmail || undefined,
+      line_items: [{
+        price_data: {
+          currency: 'eur',
+          product_data: { name: selectedPlan.name, description: selectedPlan.description },
+          unit_amount: selectedPlan.amount,
+          recurring: { interval: 'month' }
+        },
+        quantity: 1
+      }],
+      metadata: { plan },
+      success_url: `${publicUrl}/dashboard.html?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${publicUrl}/index.html#tarifs`
+    }, { idempotencyKey }),
+    { requestId: req.id, action: 'création de session' }
+  );
+
+  // L'enregistrement ne doit jamais faire échouer une session de paiement déjà créée.
+  try {
+    await db.saveOrder({
+      id: crypto.randomUUID(),
+      checkoutSessionId: session.id,
+      plan,
+      amount: selectedPlan.amount,
+      currency: 'eur',
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+  } catch (orderError) {
+    logger.error('Commande non enregistrée', { requestId: req.id, cause: orderError });
+  }
 
   res.json({ url: session.url });
 }));
 
 // ---------- Vérification du paiement au retour (fallback sans webhook) ----------
-app.get('/api/checkout/verify', asyncRoute(async (req, res) => {
-  const sessionId = String(req.query.session_id || '');
-  if (!stripe) return res.status(503).json({ error: 'Stripe non configuré.' });
-  if (!sessionId.startsWith('cs_')) return res.status(400).json({ error: 'Identifiant de session invalide.' });
+const stripeSessionIdSchema = v.string({
+  min: 4,
+  max: 200,
+  singleLine: true,
+  pattern: /^cs_[A-Za-z0-9_]+$/,
+  patternMessage: 'Identifiant de session invalide.'
+});
 
-  let session;
-  try {
-    session = await stripe.checkout.sessions.retrieve(sessionId);
-  } catch (error) {
-    return res.status(400).json({ error: 'Session de paiement introuvable.' });
-  }
+app.get('/api/checkout/verify', asyncRoute(async (req, res) => {
+  const sessionId = v.validate(stripeSessionIdSchema, req.query.session_id, { label: 'Session de paiement' });
+  if (!stripe) throw serviceUnavailable('Paiement temporairement indisponible.', 'STRIPE_NOT_CONFIGURED');
+
+  const session = await stripeCall(
+    () => stripe.checkout.sessions.retrieve(sessionId),
+    { requestId: req.id, action: 'lecture de session' }
+  );
 
   if (session.payment_status !== 'paid' && session.status !== 'complete') {
     return res.json({ status: 'pending' });
   }
 
-  await db.saveOrder({
-    id: session.id,
-    customerEmail: session.customer_details?.email || null,
-    plan: session.metadata?.plan || 'unknown',
-    amount: session.amount_total || 0,
-    currency: session.currency || 'eur',
-    status: 'paid',
-    paidAt: new Date().toISOString()
-  });
+  // Le client a payé : on renvoie toujours le statut payé même si
+  // l'enregistrement local échoue (journalisé pour retraitement manuel).
+  try {
+    await db.saveOrder({
+      id: session.id,
+      customerEmail: session.customer_details?.email || null,
+      plan: session.metadata?.plan || 'unknown',
+      amount: session.amount_total || 0,
+      currency: session.currency || 'eur',
+      status: 'paid',
+      paidAt: new Date().toISOString()
+    });
+  } catch (orderError) {
+    req.log.error('Commande payée non enregistrée lors de la vérification', { cause: orderError });
+  }
 
   res.json({ status: 'paid', plan: session.metadata?.plan || 'unknown' });
 }));
 
 // ---------- Envoi email (réservé à l'utilisateur connecté) ----------
 app.post('/api/invoices/email', requireAuth, asyncRoute(async (req, res) => {
-  const {
-    recipient, clientEmail, documentNumber, documentId, client, subject, message,
-    issueDate, dueDate, totalHT, totalTVA, totalTTC, items = []
-  } = req.body || {};
-  const emailRecipient = clientEmail || recipient;
-  const invoiceNumber = documentId || documentNumber;
-  if (!mailer) return res.status(503).json({ error: 'Envoi email non configuré. Ajoutez les paramètres SMTP dans .env.' });
-  if (!emailRecipient || !invoiceNumber || !client) return res.status(400).json({ error: 'Destinataire et informations de facture obligatoires.' });
+  const payload = parseInput('invoiceEmail', req.body, 'Envoi de facture');
+  const emailRecipient = payload.clientEmail || payload.recipient;
+  const invoiceNumber = payload.documentId || payload.documentNumber;
+  if (!mailer) throw serviceUnavailable('Envoi d’email non configuré.', 'SMTP_NOT_CONFIGURED');
+  if (!emailRecipient) throw badRequest('Adresse du destinataire obligatoire.', 'INVALID_RECIPIENT');
+
+  // Les montants affichés sont TOUJOURS remis en forme par le serveur :
+  // aucune chaîne brute du client n'atteint le PDF ou l'email.
+  const computed = money.computeTotals(payload.items || []);
+  const totals = {
+    ht: money.formatAmount(payload.totalHT ?? computed.ht),
+    tva: money.formatAmount(payload.totalTVA ?? computed.tva),
+    ttc: money.formatAmount(payload.totalTTC ?? computed.ttc)
+  };
+  // Les lignes vides de l'éditeur (aucune description, aucun prix) sont écartées.
+  const items = (payload.items || []).filter(item => item.description || item.price !== 0);
 
   const userSettings = await db.getSettings(req.userId) || {};
   const company = { ...defaultSettings, ...userSettings };
-  const pdf = await createInvoicePdf({ documentNumber: invoiceNumber, client, issueDate, dueDate, totalHT, totalTVA, totalTTC, items, company });
-  await mailer.sendMail({
-    from: `"IZI" <${process.env.MAIL_FROM || process.env.SMTP_USER}>`,
-    to: emailRecipient,
-    subject: subject || `Votre facture ${invoiceNumber} — IZI SAS`,
-    text: message || `Madame, Monsieur ${client},\n\nVeuillez trouver ci-joint votre facture ${invoiceNumber}.\nDate d'émission : ${issueDate}\nDate d'échéance : ${dueDate}\nTotal HT : ${totalHT}\nTVA : ${totalTVA}\nTotal TTC : ${totalTTC}\n\nNous restons à votre disposition pour toute information complémentaire.\n\nCordialement,\nIZI SAS`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#172033;border:1px solid #e2e6ef;border-radius:14px;overflow:hidden"><div style="background:linear-gradient(135deg,#4c1d95,#7c3aed 65%,#9333ea);padding:22px;text-align:center"><table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#ffffff;border-radius:10px;width:46px;height:46px;text-align:center;vertical-align:middle"><span style="color:#4c1d95;font-size:17px;font-weight:800;letter-spacing:1px">IZI</span></td></tr></table></div><div style="padding:26px"><p style="font-size:15px;line-height:1.6">${escapeHtml(message || `Veuillez trouver ci-joint votre facture ${invoiceNumber}.`).replaceAll('\n', '<br>')}</p><p style="font-size:15px;line-height:1.6">Nous restons à votre disposition pour toute information complémentaire.</p><p style="font-size:15px">Cordialement,<br><strong>IZI SAS</strong></p><p style="font-size:11px;color:#6b7280;border-top:1px solid #e2e6ef;padding-top:12px;margin-top:18px">Cet email et sa pièce jointe sont destinés exclusivement à leur destinataire. © 2026 IZI SAS — contact@izifacture.fr</p></div></div>`,
-    attachments: [{ filename: `${invoiceNumber}.pdf`, content: pdf }]
+  const pdf = await createInvoicePdf({
+    documentNumber: invoiceNumber,
+    client: payload.client,
+    issueDate: payload.issueDate,
+    dueDate: payload.dueDate,
+    totalHT: totals.ht,
+    totalTVA: totals.tva,
+    totalTTC: totals.ttc,
+    items,
+    company
   });
+
+  const safeMessage = payload.message || `Veuillez trouver ci-joint votre facture ${invoiceNumber}.`;
+  await sendMail({
+    from: `"IZI" <${env.get('MAIL_FROM') || env.get('SMTP_USER')}>`,
+    to: emailRecipient,
+    subject: payload.subject || `Votre facture ${invoiceNumber} — IZI SAS`,
+    text: payload.message || `Madame, Monsieur ${payload.client},\n\nVeuillez trouver ci-joint votre facture ${invoiceNumber}.\nDate d'émission : ${payload.issueDate}\nDate d'échéance : ${payload.dueDate}\nTotal HT : ${totals.ht}\nTVA : ${totals.tva}\nTotal TTC : ${totals.ttc}\n\nNous restons à votre disposition pour toute information complémentaire.\n\nCordialement,\nIZI SAS`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#172033;border:1px solid #e2e6ef;border-radius:14px;overflow:hidden"><div style="background:linear-gradient(135deg,#4c1d95,#7c3aed 65%,#9333ea);padding:22px;text-align:center"><table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#ffffff;border-radius:10px;width:46px;height:46px;text-align:center;vertical-align:middle"><span style="color:#4c1d95;font-size:17px;font-weight:800;letter-spacing:1px">IZI</span></td></tr></table></div><div style="padding:26px"><p style="font-size:15px;line-height:1.6">${escapeHtml(safeMessage).replaceAll('\n', '<br>')}</p><p style="font-size:15px;line-height:1.6">Nous restons à votre disposition pour toute information complémentaire.</p><p style="font-size:15px">Cordialement,<br><strong>IZI SAS</strong></p><p style="font-size:11px;color:#6b7280;border-top:1px solid #e2e6ef;padding-top:12px;margin-top:18px">Cet email et sa pièce jointe sont destinés exclusivement à leur destinataire. © 2026 IZI SAS — izifacture@gmail.com</p></div></div>`,
+    attachments: [{ filename: `${invoiceNumber}.pdf`, content: pdf }]
+  }, { requestId: req.id, context: `facture ${invoiceNumber}` });
+  req.log.info('Facture envoyée par email', { invoiceNumber, totalTTC: totals.ttc });
   res.json({ sent: true });
 }));
 
@@ -561,16 +900,27 @@ app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
     database: db.backend(),
+    envOk: envReport.ok,
     stripeConfigured: Boolean(stripe),
     smtpConfigured: Boolean(mailer)
   });
 });
 
-if (process.env.VERCEL !== '1') {
+// Derniers maillons de la chaîne Express : route inconnue, puis gestion
+// centralisée des erreurs (aucune fuite technique vers le client).
+app.use(notFoundHandler);
+app.use(createErrorHandler({ logger }));
+
+if (env.get('VERCEL') !== '1') {
   app.listen(port, () => {
-    console.log(`IZI disponible sur ${publicUrl}`);
-    console.log(`Base de données : ${db.backend()}`);
-    console.log(`Stripe ${stripe ? 'configuré' : 'en attente de configuration'}`);
+    logger.info('Serveur IZI démarré', {
+      url: publicUrl,
+      database: db.backend(),
+      stripe: Boolean(stripe),
+      smtp: Boolean(mailer),
+      envOk: envReport.ok,
+      mode: isProduction ? 'production' : 'développement'
+    });
   });
 }
 
