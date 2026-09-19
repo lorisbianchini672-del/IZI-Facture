@@ -18,9 +18,11 @@ function warnOnFromMismatch() {
   if (!SMTP_HOST.endsWith('gmail.com')) return;
   if (!MAIL_FROM || MAIL_FROM === SMTP_USER) return;
   console.warn(`⚠ MAIL_FROM (${MAIL_FROM}) diffère du compte SMTP (${SMTP_USER}).`);
-  console.warn('  Gmail exige que cette adresse soit un alias vérifié du compte :');
-  console.warn('  Paramètres Gmail → Comptes → « Envoyer des emails en tant que ».');
-  console.warn('  Sinon les envois sont refusés (550 5.7.1 From address not authorized).');
+  console.warn('  Gmail n’accepte cette adresse que si elle est déclarée ET VÉRIFIÉE comme');
+  console.warn('  alias du compte : Paramètres Gmail → Comptes → « Envoyer des emails en');
+  console.warn('  tant que » (un lien de confirmation est envoyé à l’adresse ajoutée).');
+  console.warn('  Sinon l’expéditeur est réécrit avec le compte authentifié, ou le message');
+  console.warn('  rebondit : vérifiez le champ « De » du message de test réellement reçu.');
 }
 
 async function main() {
