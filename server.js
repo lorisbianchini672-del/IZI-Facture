@@ -32,6 +32,7 @@ const money = require('./lib/money');
 const { withRetry, isRetryableError } = require('./lib/retry');
 const lifecycle = require('./lib/invoice-lifecycle');
 const facturx = require('./lib/facturx');
+const payments = require('./lib/invoice-payments');
 const db = require('./db');
 
 const app = express();
@@ -427,6 +428,42 @@ function createInvoicePdf(invoice) {
   });
 }
 
+// ---------- Paiement Stripe d'une facture ----------
+// Génère un lien Checkout dynamique au TTC de la facture. La session est
+// créée avec une clé d'idempotence : rejouer la requête ne crée pas deux
+// sessions. Le statut « PAYEE » est posé UNIQUEMENT par le webhook.
+app.post('/api/invoices/:id/payment-link', requireAuth, asyncRoute(async (req, res) => {
+  const invoiceId = v.validate(invoiceIdSchema, req.params.id, { label: 'Identifiant de facture' });
+  if (!stripe) throw serviceUnavailable('Paiement non configuré.', 'STRIPE_NOT_CONFIGURED');
+
+  const invoice = await db.getInvoice(invoiceId, req.userId);
+  if (!invoice) throw notFound('Facture introuvable.');
+  payments.assertPayable(invoice);
+
+  const params = payments.buildCheckoutParams(invoice, {
+    successUrl: `${publicUrl}/dashboard.html?paiement=succes&facture=${encodeURIComponent(String(invoice.number))}`,
+    cancelUrl: `${publicUrl}/dashboard.html?paiement=annule`
+  });
+  const session = await stripeCall(
+    () => stripe.checkout.sessions.create(params, {
+      idempotencyKey: `invpay-${invoiceId}-${Math.round(Number(invoice.amounts?.ttc) * 100)}`
+    }),
+    { requestId: req.id, action: 'création du lien de paiement de facture' }
+  );
+
+  // Métadonnées de paiement : autorisées même sur facture émise (elles ne
+  // touchent pas au contenu comptable : client, lignes, montants, dates).
+  await db.saveInvoice({
+    ...invoice,
+    paymentStatus: 'PENDING',
+    paymentSessionId: session.id,
+    paymentUrl: session.url
+  }, req.userId);
+
+  req.log.info('Lien de paiement créé', { invoiceId, number: invoice.number, sessionId: session.id });
+  res.status(201).json({ url: session.url, sessionId: session.id });
+}));
+
 // ---------- Webhook Stripe ----------
 app.post('/api/stripe/webhook', asyncRoute(async (req, res) => {
   const webhookSecret = env.get('STRIPE_WEBHOOK_SECRET');
@@ -443,6 +480,13 @@ app.post('/api/stripe/webhook', asyncRoute(async (req, res) => {
   } catch (error) {
     logger.warn('Signature de webhook refusée', { requestId: req.id, cause: error });
     throw badRequest('Signature de webhook invalide.', 'INVALID_WEBHOOK_SIGNATURE');
+  }
+
+  // ----- Paiement de facture (metadata.kind === 'invoice') -----
+  const sessionMetadata = event.data?.object?.metadata || {};
+  if (sessionMetadata.kind === 'invoice') {
+    await handleInvoicePaymentEvent(event, logger);
+    return res.json({ received: true });
   }
 
   if (event.type === 'checkout.session.completed') {
@@ -466,6 +510,60 @@ app.post('/api/stripe/webhook', asyncRoute(async (req, res) => {
 
   res.json({ received: true });
 }));
+
+/**
+ * Traite les événements Stripe rattachés à une facture : encaissement,
+ * échec de paiement asynchrone, expiration de la session. Toujours
+ * idempotent (un webhook re-joué ne modifie rien) et toujours 200 : un
+ * incident de persistance est journalisé mais n'alimente pas les retries
+ * infinis de Stripe.
+ * @param {{ type: string, data: { object: Record<string, any> } }} event
+ * @param {import('./lib/logger')} log logger (requestId corrélé)
+ */
+async function handleInvoicePaymentEvent(event, log) {
+  const session = event.data.object;
+  const { invoiceId, userId } = session.metadata || {};
+  if (!invoiceId || !userId) {
+    log.error('Webhook facture sans identifiants de rattachement', { eventId: event.id });
+    return;
+  }
+  const invoice = await db.getInvoice(invoiceId, userId);
+  if (!invoice) {
+    log.error('Facture introuvable pour le webhook de paiement', { invoiceId, eventId: event.id });
+    return;
+  }
+
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const updated = payments.applyPaidPayment(invoice, session);
+      if (!updated) {
+        log.info('Paiement de facture déjà enregistré (idempotent)', { invoiceId });
+        return;
+      }
+      await db.saveInvoice(updated, userId);
+      log.info('Facture payée via Stripe', {
+        invoiceId,
+        number: updated.number,
+        amountCents: session.amount_total,
+        paidAt: updated.paymentPaidAt
+      });
+      return;
+    }
+    if (event.type === 'checkout.session.async_payment_failed'
+        || event.type === 'checkout.session.expired') {
+      const outcome = event.type === 'checkout.session.expired' ? 'EXPIRED' : 'FAILED';
+      const updated = payments.applyFailedPayment(invoice, session, outcome);
+      if (!updated) return;
+      await db.saveInvoice(updated, userId);
+      log.warn('Paiement de facture non abouti', { invoiceId, outcome, number: updated.number });
+      return;
+    }
+    log.debug('Événement Stripe de facture ignoré', { type: event.type, invoiceId });
+  } catch (error) {
+    // Journalisé, pas de rejet : Stripe n'obtient pas de 5xx infini.
+    log.error('Webhook de paiement de facture non persisté', { invoiceId, eventId: event.id, cause: error });
+  }
+}
 
 // ---------- Authentification ----------
 app.post('/api/auth/register', authRateLimit, asyncRoute(async (req, res) => {
