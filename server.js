@@ -31,6 +31,7 @@ const v = require('./lib/validate');
 const money = require('./lib/money');
 const { withRetry, isRetryableError } = require('./lib/retry');
 const lifecycle = require('./lib/invoice-lifecycle');
+const reminders = require('./lib/reminders');
 const finance = require('./lib/finance');
 const facturx = require('./lib/facturx');
 const payments = require('./lib/invoice-payments');
@@ -1047,6 +1048,203 @@ app.post('/api/invoices/email', requireAuth, asyncRoute(async (req, res) => {
   }, { requestId: req.id, context: `facture ${invoiceNumber}` });
   req.log.info('Facture envoyée par email', { invoiceNumber, totalTTC: totals.ttc });
   res.json({ sent: true });
+}));
+
+// ---------- Relances automatiques ----------
+// Évaluation des factures relançables (aperçu, sans envoi) : le front
+// affiche les niveaux applicables et les emails clients manquants.
+app.get('/api/reminders/preview', requireAuth, asyncRoute(async (req, res) => {
+  const invoices = await db.listInvoices(req.userId);
+  res.json(invoices
+    .filter(invoice => invoice.status === 'ENVOYEE' || invoice.status === 'RETARD')
+    .map(invoice => {
+      const history = Array.isArray(invoice.reminders) ? invoice.reminders : [];
+      const evaluation = reminders.evaluateReminder(invoice, {
+        sent: history.map(entry => String(entry?.level || ''))
+      });
+      return {
+        id: invoice.id,
+        number: invoice.number,
+        client: invoice.client,
+        clientEmail: invoice.clientEmail || null,
+        dueDate: invoice.dueDate,
+        reminders: history,
+        eligible: evaluation.eligible,
+        /** Raison d'inéligibilité : not_due_yet | already_sent. */
+        reason: evaluation.eligible ? undefined : evaluation.reason,
+        level: evaluation.eligible ? evaluation.level.level : undefined,
+        daysLate: evaluation.eligible ? evaluation.daysLate : undefined
+      };
+    }));
+}));
+
+const reminderSchema = v.object({
+  /** Email explicite : utile quand la facture ne stocke pas l'adresse client. */
+  email: v.optional(v.email())
+});
+
+/**
+ * Relance à la demande sur une facture éligible. Le niveau est calculé par
+ * le serveur (jamais choisi par le client) et l'envoi est historisé sur la
+ * facture pour empêcher les doublons.
+ */
+app.post('/api/invoices/:id/remind', requireAuth, asyncRoute(async (req, res) => {
+  const invoiceId = v.validate(invoiceIdSchema, req.params.id, { label: 'Identifiant de facture' });
+  const { email } = v.validate(reminderSchema, req.body || {}, { label: 'Relance' });
+  if (!mailer) throw serviceUnavailable('Envoi d’email non configuré.', 'SMTP_NOT_CONFIGURED');
+
+  const invoice = await db.getInvoice(invoiceId, req.userId);
+  if (!invoice) throw notFound('Facture introuvable.');
+
+  const history = Array.isArray(invoice.reminders) ? invoice.reminders : [];
+  const evaluation = reminders.evaluateReminder(invoice, {
+    sent: history.map(entry => String(entry?.level || ''))
+  });
+  if (!evaluation.eligible) {
+    /** @type {Record<string, [string, string]>} */
+    const reasons = {
+      already_paid: ['Facture déjà payée : aucune relance nécessaire.', 'ALREADY_PAID'],
+      not_due_yet: ['Facture pas encore échue : la relance est prématurée.', 'NOT_DUE_YET'],
+      already_sent: ['Cette relance a déjà été envoyée.', 'ALREADY_SENT'],
+      draft: ['Un brouillon ne peut pas être relancé.', 'DRAFT_NOT_REMINDABLE']
+    };
+    const [message, code] = reasons[evaluation.reason] || ['Relance non applicable.', 'REMINDER_NOT_APPLICABLE'];
+    throw conflict(message, code);
+  }
+
+  const to = email || invoice.clientEmail;
+  if (!to) {
+    throw badRequest('Adresse email du client inconnue : précisez-la dans la requête.', 'MISSING_CLIENT_EMAIL');
+  }
+  const totalTTC = String(invoice.totalTTC || '') || money.formatAmount(invoice.amounts?.ttc ?? 0);
+  const companySettings = await db.getSettings(req.userId) || {};
+  const emailContent = reminders.buildReminderEmail({
+    number: String(invoice.number || ''),
+    client: String(invoice.client || ''),
+    dueDate: String(invoice.dueDate || ''),
+    totalTTC
+  }, evaluation, {
+    companyName: companySettings.legalName || defaultSettings.legalName,
+    paymentUrl: typeof invoice.paymentUrl === 'string' ? invoice.paymentUrl : ''
+  });
+
+  await sendMail({
+    from: `"${companySettings.legalName || 'IZI'}" <${env.get('MAIL_FROM') || env.get('SMTP_USER')}>`,
+    to,
+    subject: emailContent.subject,
+    text: emailContent.text,
+    html: emailContent.html
+  }, { requestId: req.id, context: `relance ${invoice.number}` });
+
+  await db.saveInvoice({
+    ...invoice,
+    reminders: [...history, {
+      level: evaluation.level.level,
+      sentAt: new Date().toISOString(),
+      to
+    }]
+  }, req.userId);
+  req.log.info('Relance envoyée', {
+    invoiceNumber: invoice.number,
+    level: evaluation.level.level,
+    daysLate: evaluation.daysLate
+  });
+  res.json({ sent: true, level: evaluation.level.level, daysLate: evaluation.daysLate, to });
+}));
+
+/**
+ * Moteur de relance global : parcourt toutes les factures (tous
+ * utilisateurs) et envoie les relances dues. Les erreurs individuelles
+ * n'interrompent pas le lot ; les factures sans adresse client sont
+ * signalées sans être bloquantes.
+ * @param {{ requestId?: string }} [options]
+ * @returns {Promise<{ sent: number, skipped: number, missingEmail: number }>}
+ */
+async function runDueReminders({ requestId = '-' } = {}) {
+  if (!mailer) return { sent: 0, skipped: 0, missingEmail: 0 };
+  const allInvoices = await db.listAllInvoices();
+  let sent = 0;
+  let skipped = 0;
+  let missingEmail = 0;
+  for (const invoice of allInvoices) {
+    const history = Array.isArray(invoice.reminders) ? invoice.reminders : [];
+    const evaluation = reminders.evaluateReminder(invoice, {
+      sent: history.map(entry => String(entry?.level || ''))
+    });
+    if (!evaluation.eligible) {
+      skipped += 1;
+      continue;
+    }
+    const to = invoice.clientEmail;
+    if (!to) {
+      missingEmail += 1;
+      logger.warn('Relance impossible : adresse client manquante', {
+        requestId,
+        invoiceNumber: invoice.number,
+        code: 'MISSING_CLIENT_EMAIL'
+      });
+      continue;
+    }
+    try {
+      const totalTTC = String(invoice.totalTTC || '') || money.formatAmount(invoice.amounts?.ttc ?? 0);
+      const companySettings = await db.getSettings(invoice.userId) || {};
+      const emailContent = reminders.buildReminderEmail({
+        number: String(invoice.number || ''),
+        client: String(invoice.client || ''),
+        dueDate: String(invoice.dueDate || ''),
+        totalTTC
+      }, evaluation, {
+        companyName: companySettings.legalName || defaultSettings.legalName,
+        paymentUrl: typeof invoice.paymentUrl === 'string' ? invoice.paymentUrl : ''
+      });
+      await sendMail({
+        from: `"${companySettings.legalName || 'IZI'}" <${env.get('MAIL_FROM') || env.get('SMTP_USER')}>`,
+        to,
+        subject: emailContent.subject,
+        text: emailContent.text,
+        html: emailContent.html
+      }, { requestId, context: `relance auto ${invoice.number}` });
+      invoice.reminders = [...history, {
+        level: evaluation.level.level,
+        sentAt: new Date().toISOString(),
+        to
+      }];
+      await db.saveInvoice(invoice, invoice.userId);
+      sent += 1;
+      logger.info('Relance automatique envoyée', {
+        requestId,
+        invoiceNumber: invoice.number,
+        level: evaluation.level.level,
+        daysLate: evaluation.daysLate
+      });
+    } catch (error) {
+      // Une panne SMTP sur une facture n'arrête pas le lot : la relance non
+      // envoyée partira au prochain passage (historique resté intact).
+      skipped += 1;
+      logger.error('Relance en échec', { requestId, invoiceNumber: invoice.number, cause: error });
+    }
+  }
+  return { sent, skipped, missingEmail };
+}
+
+// Scheduler interne (serveur autonome uniquement — sur Vercel, un cron
+// externe appelle POST /api/reminders/run). Premier passage au démarrage :
+// la déduplication par niveau rend chaque passage idempotent.
+if (env.get('VERCEL') !== '1' && mailer && env.get('REMINDERS_AUTO') !== 'off') {
+  const schedule = () => runDueReminders()
+    .catch(error => logger.error('Moteur de relance en échec', { cause: error }));
+  schedule();
+  // Toutes les 6 heures ; unref pour ne pas retenir le processus à l'arrêt.
+  setInterval(schedule, 6 * 60 * 60 * 1000).unref();
+}
+
+// Déclenchement manuel (exploitation, cron externe) : protégé par le jeton
+// administrateur. Idempotent par construction — un cron rappelé deux fois
+// ne re-spammera pas les clients (niveaux déjà envoyés ignorés).
+app.post('/api/reminders/run', requireAdmin, asyncRoute(async (req, res) => {
+  const outcome = await runDueReminders({ requestId: req.id });
+  req.log.info('Moteur de relance exécuté', { ...outcome });
+  res.json({ ok: true, ...outcome });
 }));
 
 // ---------- Administration ----------

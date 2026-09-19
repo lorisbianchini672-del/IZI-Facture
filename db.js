@@ -313,6 +313,23 @@ async function getInvoice(id, userId) {
   return found ? asObject(found) : null;
 }
 
+// ---------- Lecture multi-utilisateurs (relances automatiques) ----------
+/**
+ * Renvoie TOUTES les factures, tous utilisateurs confondus. Réservé au
+ * moteur de relance automatisé exécuté côté serveur — jamais renvoyé
+ * tel quel à un client.
+ * @returns {Promise<Array<Record<string, unknown>>>}
+ */
+async function listAllInvoices() {
+  if (useSupabase) {
+    const { data, error } = await supabaseClient.from('invoices').select('data');
+    check(error, 'Lecture de toutes les factures');
+    return (data || []).map(row => asObject(row.data)).filter(Boolean);
+  }
+  const invoices = await readJson(invoicesFile, []);
+  return invoices.map(invoice => asObject(invoice));
+}
+
 // ---------- Numérotation séquentielle (section critique) ----------
 // File de promesses : les allocations sont sérialisées dans le processus.
 // Deux validations simultanées ne peuvent pas obtenir le même ordinal, et
@@ -462,6 +479,7 @@ module.exports = {
   deleteSessionByTokenHash,
   listInvoices,
   getInvoice,
+  listAllInvoices,
   saveInvoice,
   updateInvoiceStatus,
   updateInvoiceByNumber,
