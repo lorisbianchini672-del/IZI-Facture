@@ -1,9 +1,28 @@
 #!/bin/sh
+# Configuration nginx pour izifacture.fr (VM Scaleway 51.158.106.168).
+#
+# À APPLIQUER DANS CET ORDRE, sinon https://izifacture.fr affiche
+# « Votre connexion n'est pas privée » (certificat auto-signé snakeoil) :
+#
+#   ÉTAPE 1 — obtenir le certificat AVANT de basculer le DNS
+#             (certbot en défi DNS, qui ne dépend pas de l'enregistrement A) :
+#     sudo apt install -y certbot
+#     sudo certbot certonly --manual --preferred-challenges dns \
+#          -d izifacture.fr -d www.izifacture.fr
+#     # ajouter les enregistrements TXT _acme-challenge demandés dans Cloudflare,
+#     # attendre la propagation (dig +short TXT _acme-challenge.izifacture.fr)
+#   ÉTAPE 2 — appliquer ce fichier  : sh nginx_conf.sh
+#   ÉTAPE 3 — basculer le DNS (Cloudflare) vers 51.158.106.168
+#   ÉTAPE 4 — vérifier avec        : npm run check:dns
+#
+# Le certificat doit exister : nginx refuse de démarrer si ces deux fichiers
+# sont absents.
 cat > /etc/nginx/sites-available/izi-facture << 'NGX'
 server {
     listen 80;
     server_name izifacture.fr www.izifacture.fr;
 
+    # Nécessaire au renouvellement automatique (certbot --webroot).
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
@@ -13,13 +32,12 @@ server {
     }
 }
 
-# HTTPS placeholder until cert is issued
 server {
     listen 443 ssl;
     server_name izifacture.fr www.izifacture.fr;
 
-    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
-    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+    ssl_certificate /etc/letsencrypt/live/izifacture.fr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/izifacture.fr/privkey.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;

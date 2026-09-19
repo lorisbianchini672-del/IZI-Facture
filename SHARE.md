@@ -13,6 +13,19 @@ Tant que `izifacture.fr` pointe ailleurs, **tout lien partagé vers le domaine e
 Pour partager CE site : soit pointer le domaine vers la VM de production, soit partager provisoirement
 l'URL `https://51.158.106.168.nip.io/`.
 
+Deux conditions bloquantes ont été mesurées le 19/09/2026 :
+
+| Condition | État | Conséquence |
+| --- | --- | --- |
+| Certificat TLS couvrant `izifacture.fr` sur la VM | ❌ auto-signé (`snakeoil`) | basculer le DNS maintenant → alerte « connexion non privée » |
+| `robots.txt`, `sitemap.xml`, `og-image.png` servis par la VM | ❌ 404 (code non déployé) | pas d'aperçu de partage ni d'indexation |
+
+Diagnostic complet en une commande (aucune modification) :
+
+```bash
+npm run check:dns
+```
+
 ## URL à utiliser
 
 - Domaine (une fois le DNS corrigé, voir ci-dessous) : `https://izifacture.fr/`
@@ -97,16 +110,55 @@ Si l'aperçu conserve une ancienne version : forcer le rafraîchissement du cach
 - `sitemap.xml` : 14 pages publiques. À déclarer dans la Search Console Google
   (`https://izifacture.fr/sitemap.xml`).
 
-## Corriger le domaine (Cloudflare)
+## Mettre le domaine en ligne (ordre impératif)
 
-Le domaine est actuellement servi par Cloudflare vers un autre hébergement.
+⚠️ **Ne basculez pas le DNS en premier** : la VM présente actuellement un certificat
+auto-signé (`ssl-cert-snakeoil`) pour `izifacture.fr`. Un basculement immédiat ferait
+apparaître « Votre connexion n'est pas privée » chez tous les visiteurs.
 
-1. Cloudflare → **DNS** → enregistrement `A` de `izifacture.fr` :
-   remplacer `185.158.133.1` par **l'adresse IP de la VM** (`51.158.106.168`).
-2. Faire de même pour `www` (enregistrement `A` vers la même IP, ou `CNAME` vers `izifacture.fr`).
-3. Le certificat en place sur la VM couvre `izifacture.fr` : conserver le mode SSL
-   **Full (strict)** et ne pas activer la réécriture d'URL Cloudflare sur `/api/`.
-4. Vérifier : `curl -sS https://izifacture.fr/ | grep -o '<title>[^<]*</title>'` doit
-   renvoyer le titre IZI, et non celui de l'application OCR.
-5. Étant donné qu'un site Lovable a été publié sur ce domaine, vérifier que celui-ci reste
-   accessible sur une autre adresse avant de déplacer l'enregistrement DNS.
+Procédure vérifiée (chaque étape est contrôlable) :
+
+**Étape 0 — Déployer le code sur la VM.** Le serveur de production ne sert pas encore
+`robots.txt`, `sitemap.xml` ni `og-image.png` (tous en 404). Sur la VM :
+
+```bash
+cd /chemin/vers/izi && git pull && sudo systemctl restart izi
+```
+
+**Étape 1 — Obtenir le certificat avant de toucher au DNS** (défi DNS : ne dépend pas
+de l'enregistrement `A`, donc zéro coupure) :
+
+```bash
+sudo apt install -y certbot
+sudo certbot certonly --manual --preferred-challenges dns \
+     -d izifacture.fr -d www.izifacture.fr
+# ajouter les TXT _acme-challenge demandés dans Cloudflare, puis vérifier :
+dig +short TXT _acme-challenge.izifacture.fr
+```
+
+**Étape 2 — Appliquer la configuration nginx** (elle référence désormais
+`/etc/letsencrypt/live/izifacture.fr/`) :
+
+```bash
+sh nginx_conf.sh && sudo nginx -t && sudo systemctl reload nginx
+```
+
+**Étape 3 — Basculer le DNS (Cloudflare)**
+1. Enregistrement `A` de `izifacture.fr` : `185.158.133.1` → **`51.158.106.168`**.
+2. Idem pour `www` (enregistrement `A` vers la même IP, ou `CNAME` vers `izifacture.fr`).
+   `www` renvoie actuellement `421 Project not found` côté Cloudflare/Lovable.
+3. Mode SSL **Full (strict)**, sans réécriture d'URL sur `/api/`.
+
+**Étape 4 — Vérifier** (une seule commande, sans rien modifier) :
+
+```bash
+npm run check:dns
+```
+
+Elle contrôle le DNS, le certificat, le titre réellement servi et les fichiers de
+partage. `izifacture.fr` et `www` doivent pointer vers `51.158.106.168`, le titre
+doit être celui de `index.html`, et les 3 fichiers doivent répondre `200`.
+
+**Point de vigilance :** un site « IZIFACTURE — Dématérialisation et OCR de factures par
+IA » (Lovable) est publié sur ce domaine. Avant de déplacer l'enregistrement, assurez-vous
+que ce site reste accessible sur une autre adresse, sinon il deviendra injoignable.

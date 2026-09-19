@@ -246,6 +246,14 @@ async function main(argv = process.argv.slice(2)) {
       if (url.protocol !== 'https:' || url.username || url.password) throw new Error(`${key} : URL HTTPS simple requise.`);
     }
     if (!process.env.PROSPECTION_SENDER_NAME?.trim()) throw new Error('PROSPECTION_SENDER_NAME requis dans .env (votre nom ou votre société).');
+    // Un lien vers une adresse IP (nip.io) est un signal de spam fort : prévenir
+    // sans bloquer, la campagne reste possible en phase de test.
+    const siteHost = new URL(process.env.PROSPECTION_SITE_URL).hostname;
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(siteHost) || /\.nip\.io$/i.test(siteHost)) {
+      console.warn(`⚠ PROSPECTION_SITE_URL (${process.env.PROSPECTION_SITE_URL}) est une adresse IP :`);
+      console.warn('  Gmail et Outlook pénalisent fortement ce type de lien (risque de spam).');
+      console.warn('  Utilisez le domaine après correction du DNS (SHARE.md, `npm run check:dns`).');
+    }
     for (const [name, value] of Object.entries({ SMTP_PORT, BATCH_SIZE, DELAY_MS, PAUSE_MS })) {
       if (!Number.isSafeInteger(value) || value < 1 || value > 2147483647) throw new Error(`${name} invalide.`);
     }
