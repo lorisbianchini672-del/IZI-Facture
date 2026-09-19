@@ -31,6 +31,7 @@ const v = require('./lib/validate');
 const money = require('./lib/money');
 const { withRetry, isRetryableError } = require('./lib/retry');
 const lifecycle = require('./lib/invoice-lifecycle');
+const finance = require('./lib/finance');
 const facturx = require('./lib/facturx');
 const payments = require('./lib/invoice-payments');
 const db = require('./db');
@@ -715,6 +716,26 @@ app.put('/api/settings', requireAuth, asyncRoute(async (req, res) => {
 app.get('/api/invoices', requireAuth, asyncRoute(async (req, res) => {
   const invoices = await db.listInvoices(req.userId);
   res.json(invoices.map(normalizeInvoiceForClient));
+}));
+
+// ---------- Indicateurs financiers (tableau de bord) ----------
+// Instantané calculé côté serveur : CA, encaissé, encours (BFR) et échéancier
+// des impayés avec alertes. Les montants sont renvoyés en nombres ET en
+// format français prêt à afficher (aucune logique monétaire côté client).
+app.get('/api/metrics', requireAuth, asyncRoute(async (req, res) => {
+  const invoices = await db.listInvoices(req.userId);
+  const snapshot = finance.computeFinancials(invoices);
+  res.json({
+    ...snapshot,
+    formatted: {
+      revenueHT: money.formatAmount(snapshot.revenue.ht),
+      revenueTTC: money.formatAmount(snapshot.revenue.ttc),
+      collectedTTC: money.formatAmount(snapshot.collected.ttc),
+      collectedTVA: money.formatAmount(snapshot.collected.tva),
+      outstandingTTC: money.formatAmount(snapshot.outstanding.ttc),
+      overdueTTC: money.formatAmount(snapshot.overdue.totalTtc)
+    }
+  });
 }));
 
 app.post('/api/invoices', requireAuth, asyncRoute(async (req, res) => {

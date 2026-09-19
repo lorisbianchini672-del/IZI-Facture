@@ -1350,6 +1350,7 @@
                     </div>
                     <div class="stat-value" id="kpi-overdue" style="color:var(--error);">1 450,00 €</div>
                     <div class="stat-footer">
+                        <span style="color:var(--gray-500); font-weight:600;" id="kpi-overdue-count">—</span>
                         <button class="action-icon-btn" onclick="showToast('Relances automatiques envoyées par email aux clients en retard !');">
                             ⚡ Relancer tout
                         </button>
@@ -1879,6 +1880,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderCalendar();
             verifyStripePayment();
+            updateKpis();
         });
 
         // Vérification du paiement Stripe au retour du checkout
@@ -1898,61 +1900,61 @@
             window.history.replaceState({}, '', window.location.pathname);
         }
 
-        // Period Dropdown Switcher
+        // Les indicateurs affichés proviennent de /api/metrics (données réelles
+        // calculées par le serveur). Ce sélecteur ne pilote que le titre du
+        // graphique et les notices : il ne remplace plus les valeurs réelles
+        // des cartes par un jeu de démonstration codé en dur.
         function changePeriod(period) {
-            const kpiCA = document.getElementById('kpi-ca');
-            const kpiPending = document.getElementById('kpi-pending');
-            const kpiOverdue = document.getElementById('kpi-overdue');
-            const kpiTVA = document.getElementById('kpi-tva');
-            const trend = document.getElementById('kpi-ca-trend');
-            const sub = document.getElementById('kpi-ca-sub');
+            const titles = {
+                SEPT_2026: "Évolution du Chiffre d'Affaires 2026 (€)",
+                AOUT_2026: "Bilan Clôturé : Août 2026 (€)",
+                JUIL_2026: "Bilan Clôturé : Juillet 2026 (€)",
+                T3_2026: "Cumul 3ème Trimestre 2026 (€)",
+                YEAR_2026: "Bilan Annuel 2026 Consolidé (€)"
+            };
+            const notices = {
+                SEPT_2026: "Période active : Septembre 2026 (En cours)",
+                AOUT_2026: "Bilan clôturé d'Août 2026 chargé",
+                JUIL_2026: "Bilan clôturé de Juillet 2026 chargé",
+                T3_2026: "Données consolidées du T3 2026 chargées",
+                YEAR_2026: "Bilan consolidé de l'année 2026 chargé"
+            };
             const chartTitle = document.getElementById('chart-title');
+            if (chartTitle && titles[period]) chartTitle.textContent = titles[period];
+            if (notices[period]) showToast(notices[period]);
+        }
 
-            if (period === 'SEPT_2026') {
-                kpiCA.textContent = "28 450,00 €";
-                kpiPending.textContent = "7 320,00 €";
-                kpiOverdue.textContent = "1 450,00 €";
-                kpiTVA.textContent = "5 690,00 €";
-                trend.textContent = "↑ +14.8%";
-                sub.textContent = "vs mois précédent";
-                chartTitle.textContent = "Évolution du Chiffre d'Affaires 2026 (€)";
-                showToast("Période active : Septembre 2026 (En cours)");
-            } else if (period === 'AOUT_2026') {
-                kpiCA.textContent = "24 780,00 €";
-                kpiPending.textContent = "1 850,00 €";
-                kpiOverdue.textContent = "0,00 €";
-                kpiTVA.textContent = "4 956,00 €";
-                trend.textContent = "↑ +8.2%";
-                sub.textContent = "vs Juillet 2026";
-                chartTitle.textContent = "Bilan Clôturé : Août 2026 (€)";
-                showToast("Bilan clôturé d'Août 2026 chargé");
-            } else if (period === 'JUIL_2026') {
-                kpiCA.textContent = "22 900,00 €";
-                kpiPending.textContent = "0,00 €";
-                kpiOverdue.textContent = "0,00 €";
-                kpiTVA.textContent = "4 580,00 €";
-                trend.textContent = "↑ +12.0%";
-                sub.textContent = "vs Juin 2026";
-                chartTitle.textContent = "Bilan Clôturé : Juillet 2026 (€)";
-                showToast("Bilan clôturé de Juillet 2026 chargé");
-            } else if (period === 'T3_2026') {
-                kpiCA.textContent = "76 130,00 €";
-                kpiPending.textContent = "9 170,00 €";
-                kpiOverdue.textContent = "1 450,00 €";
-                kpiTVA.textContent = "15 226,00 €";
-                trend.textContent = "↑ +19.4%";
-                sub.textContent = "vs T2 2026";
-                chartTitle.textContent = "Cumul 3ème Trimestre 2026 (€)";
-                showToast("Données consolidées du T3 2026 chargées");
-            } else if (period === 'YEAR_2026') {
-                kpiCA.textContent = "218 600,00 €";
-                kpiPending.textContent = "9 170,00 €";
-                kpiOverdue.textContent = "1 450,00 €";
-                kpiTVA.textContent = "43 720,00 €";
-                trend.textContent = "↑ +28.5%";
-                sub.textContent = "vs Année 2025";
-                chartTitle.textContent = "Bilan Annuel 2026 Consolidé (€)";
-                showToast("Bilan consolidé de l'année 2026 chargé");
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el && typeof value === 'string') el.textContent = value;
+        }
+
+        // Indicateurs financiers réels : un seul appel /api/metrics met à jour
+        // les quatre cartes. En cas d'indisponibilité, l'échec est rendu
+        // visible (aucune valeur fausse, aucun échec silencieux).
+        async function updateKpis() {
+            try {
+                const res = await fetch('/api/metrics');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const snapshot = await res.json();
+                const f = snapshot.formatted || {};
+                setText('kpi-ca', f.collectedTTC);
+                setText('kpi-ca-trend', `${snapshot.collected.count} payée${snapshot.collected.count > 1 ? 's' : ''}`);
+                setText('kpi-ca-sub', 'encaissé à ce jour');
+                setText('kpi-pending', f.outstandingTTC);
+                setText('kpi-pending-count', snapshot.outstanding.count > 0
+                    ? `${snapshot.outstanding.count} facture${snapshot.outstanding.count > 1 ? 's' : ''} en attente`
+                    : 'Aucune facture en attente');
+                setText('kpi-overdue', f.overdueTTC);
+                setText('kpi-overdue-count', snapshot.overdue.count > 0
+                    ? `${snapshot.overdue.count} impayé${snapshot.overdue.count > 1 ? 's' : ''}`
+                        + (snapshot.overdue.criticalCount > 0
+                            ? ` — ${snapshot.overdue.criticalCount} critique${snapshot.overdue.criticalCount > 1 ? 's' : ''}`
+                            : '')
+                    : 'Aucun impayé — tout va bien');
+                setText('kpi-tva', f.collectedTVA);
+            } catch (error) {
+                setText('kpi-ca-sub', 'indicateurs indisponibles');
             }
         }
 
