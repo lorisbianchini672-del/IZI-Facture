@@ -70,7 +70,7 @@ IZI SAS`,
           </table>
           <p style="font-size:15px;line-height:1.6;margin-top:16px">Nous restons à votre disposition pour toute information complémentaire.</p>
           <p style="font-size:15px">Cordialement,<br><strong>IZI SAS</strong></p>
-          <p style="font-size:11px;color:#6b7280;border-top:1px solid #e2e6ef;padding-top:12px;margin-top:18px">Cet email de démonstration et sa pièce jointe sont destinés exclusivement à leur destinataire. © 2026 IZI SAS — izifacture@gmail.com</p>
+          <p style="font-size:11px;color:#6b7280;border-top:1px solid #e2e6ef;padding-top:12px;margin-top:18px">Cet email de démonstration et sa pièce jointe sont destinés exclusivement à leur destinataire. © 2026 IZI SAS — izifacturation@gmail.com</p>
         </div>
       </div>`
     });

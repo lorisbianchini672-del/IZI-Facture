@@ -14,11 +14,11 @@ const nodemailer = require('nodemailer');
 
 // ---- Configuration ----
 const SITE_URL = process.env.PROSPECTION_SITE_URL || 'https://51.158.106.168.nip.io';
-const CONTACT_EMAIL = process.env.PROSPECTION_CONTACT || 'izifacture@gmail.com';
+const CONTACT_EMAIL = process.env.PROSPECTION_CONTACT || 'izifacturation@gmail.com';
 // Adresse de réponse (Reply-To). Doit impérativement être une boîte RÉELLE :
 // izifacture.fr n'a aucun enregistrement MX aujourd'hui, donc les réponses à
 // une adresse @izifacture.fr rebondissent. On utilise donc l'adresse Gmail de
-// l'entreprise (izifacture@gmail.com), qui est bien relevée.
+// l'entreprise (izifacturation@gmail.com), qui est bien relevée.
 const REPLY_TO = process.env.PROSPECTION_REPLY_TO || CONTACT_EMAIL;
 // Gmail réécrit l'expéditeur s'il diffère du compte authentifié : on utilise
 // donc SMTP_USER par défaut. Définir EMAIL_FROM dans .env une fois une adresse

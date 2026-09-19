@@ -425,7 +425,7 @@ function createInvoicePdf(invoice) {
     document.moveDown().text(`Total HT : ${invoice.totalHT}`);
     document.text(`TVA : ${invoice.totalTVA}`);
     document.font('Helvetica-Bold').fontSize(14).text(`Total TTC : ${invoice.totalTTC}`);
-    document.font('Helvetica').fontSize(8).fillColor('#687386').text('Document généré électroniquement par IZI SAS — izifacture@gmail.com', 50, 750);
+    document.font('Helvetica').fontSize(8).fillColor('#687386').text('Document généré électroniquement par IZI SAS — izifacturation@gmail.com', 50, 750);
     document.end();
   });
 }
@@ -612,7 +612,7 @@ app.post('/api/auth/register', authRateLimit, asyncRoute(async (req, res) => {
           `Accéder à votre espace : ${dashboardUrl}`,
           `Connexion ultérieure : ${loginUrl}`,
           '',
-          'Pour toute question, notre service client se tient à votre disposition : izifacture@gmail.com',
+          'Pour toute question, notre service client se tient à votre disposition : izifacturation@gmail.com',
           '',
           'Cordialement,',
           "L'équipe IZI"
@@ -634,7 +634,7 @@ app.post('/api/auth/register', authRateLimit, asyncRoute(async (req, res) => {
             <a href="${dashboardUrl}" style="display:inline-block;background:#5b21b6;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;padding:13px 26px;font-size:15px">Accéder à mon espace</a>
             <p style="font-size:13px;color:#6b7280;margin-top:12px">Connexion ultérieure : <a href="${loginUrl}" style="color:#7c3aed">${loginUrl}</a></p>
           </div>
-          <div style="background:#172033;color:#cbd5e1;text-align:center;padding:14px;font-size:12px">© 2026 IZI SAS — izifacture@gmail.com — Mentions légales disponibles sur notre site</div>
+          <div style="background:#172033;color:#cbd5e1;text-align:center;padding:14px;font-size:12px">© 2026 IZI SAS — izifacturation@gmail.com — Mentions légales disponibles sur notre site</div>
         </div>`
       });
       req.log.info('Email de confirmation d’inscription envoyé');
@@ -1043,7 +1043,7 @@ app.post('/api/invoices/email', requireAuth, asyncRoute(async (req, res) => {
     to: emailRecipient,
     subject: payload.subject || `Votre facture ${invoiceNumber} — IZI SAS`,
     text: payload.message || `Madame, Monsieur ${payload.client},\n\nVeuillez trouver ci-joint votre facture ${invoiceNumber}.\nDate d'émission : ${payload.issueDate}\nDate d'échéance : ${payload.dueDate}\nTotal HT : ${totals.ht}\nTVA : ${totals.tva}\nTotal TTC : ${totals.ttc}\n\nNous restons à votre disposition pour toute information complémentaire.\n\nCordialement,\nIZI SAS`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#172033;border:1px solid #e2e6ef;border-radius:14px;overflow:hidden"><div style="background:linear-gradient(135deg,#4c1d95,#7c3aed 65%,#9333ea);padding:22px;text-align:center"><table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#ffffff;border-radius:10px;width:46px;height:46px;text-align:center;vertical-align:middle"><span style="color:#4c1d95;font-size:17px;font-weight:800;letter-spacing:1px">IZI</span></td></tr></table></div><div style="padding:26px"><p style="font-size:15px;line-height:1.6">${escapeHtml(safeMessage).replaceAll('\n', '<br>')}</p><p style="font-size:15px;line-height:1.6">Nous restons à votre disposition pour toute information complémentaire.</p><p style="font-size:15px">Cordialement,<br><strong>IZI SAS</strong></p><p style="font-size:11px;color:#6b7280;border-top:1px solid #e2e6ef;padding-top:12px;margin-top:18px">Cet email et sa pièce jointe sont destinés exclusivement à leur destinataire. © 2026 IZI SAS — izifacture@gmail.com</p></div></div>`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#172033;border:1px solid #e2e6ef;border-radius:14px;overflow:hidden"><div style="background:linear-gradient(135deg,#4c1d95,#7c3aed 65%,#9333ea);padding:22px;text-align:center"><table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#ffffff;border-radius:10px;width:46px;height:46px;text-align:center;vertical-align:middle"><span style="color:#4c1d95;font-size:17px;font-weight:800;letter-spacing:1px">IZI</span></td></tr></table></div><div style="padding:26px"><p style="font-size:15px;line-height:1.6">${escapeHtml(safeMessage).replaceAll('\n', '<br>')}</p><p style="font-size:15px;line-height:1.6">Nous restons à votre disposition pour toute information complémentaire.</p><p style="font-size:15px">Cordialement,<br><strong>IZI SAS</strong></p><p style="font-size:11px;color:#6b7280;border-top:1px solid #e2e6ef;padding-top:12px;margin-top:18px">Cet email et sa pièce jointe sont destinés exclusivement à leur destinataire. © 2026 IZI SAS — izifacturation@gmail.com</p></div></div>`,
     attachments: [{ filename: `${invoiceNumber}.pdf`, content: pdf }]
   }, { requestId: req.id, context: `facture ${invoiceNumber}` });
   req.log.info('Facture envoyée par email', { invoiceNumber, totalTTC: totals.ttc });

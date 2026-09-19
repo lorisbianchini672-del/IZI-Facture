@@ -32,7 +32,7 @@ const SENT_CSV = path.join(PROSP_DIR, 'envoyes-lyon.csv');
 const ERRORS_CSV = path.join(PROSP_DIR, 'erreurs-lyon.csv');
 
 const SITE_URL = process.env.PROSPECTION_SITE_URL || 'https://51.158.106.168.nip.io';
-const CONTACT_EMAIL = process.env.PROSPECTION_CONTACT || 'izifacture@gmail.com';
+const CONTACT_EMAIL = process.env.PROSPECTION_CONTACT || 'izifacturation@gmail.com';
 const REPLY_TO = process.env.PROSPECTION_REPLY_TO || CONTACT_EMAIL;
 const FROM = process.env.EMAIL_FROM || process.env.SMTP_USER;
 
