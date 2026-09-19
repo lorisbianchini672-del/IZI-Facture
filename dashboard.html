@@ -1602,7 +1602,12 @@
                     </div>
                     <div class="form-group">
                         <label>Date d'émission</label>
-                        <input type="date" id="form-date" value="2026-09-05" required>
+                        <input type="date" id="form-date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date d'échéance</label>
+                        <input type="date" id="form-due" required>
                     </div>
 
                     <div class="form-group full">
@@ -1984,12 +1989,41 @@
             });
         }
 
-        function invoiceActionsMarkup(key) {
+        // Transitions légales (miroir de lib/invoice-lifecycle.js côté serveur) :
+        // le menu n'expose QUE les statuts atteignables, le serveur reste
+        // l'arbitre final (409 si divergence).
+        const STATUS_TRANSITIONS = {
+            BROUILLON: ['ATTENTE', 'ENVOYEE'],
+            ATTENTE: ['ENVOYEE', 'PAYEE', 'RETARD'],
+            ENVOYEE: ['PAYEE', 'RETARD'],
+            RETARD: ['ENVOYEE', 'PAYEE'],
+            PAYEE: []
+        };
+
+        function invoiceActionsMarkup(key, status) {
             // L'identifiant est injecté dans des attributs onclick : seuls les
             // caractères sûrs pour un id technique sont conservés, toute autre
             // valeur (guillemets, parenthèses) est exclue → pas d'évasion JS.
             const id = String(key ?? '').replace(/[^A-Za-z0-9_-]/g, '');
-            return `<div class="invoice-actions"><button class="invoice-actions-trigger" aria-label="Actions de la facture" onclick="toggleInvoiceMenu(event, '${id}')">•••</button><div class="invoice-actions-menu" id="actions-${id}"><button onclick="viewInvoiceByKey('${id}')">Voir le détail</button><button onclick="editInvoiceByKey('${id}')">Modifier</button><button onclick="toggleStatusMenu(event, '${id}')">Changer le statut <span style="float:right">›</span></button><div class="invoice-status-submenu" id="status-${id}"><button onclick="changeInvoiceStatus('${id}', 'BROUILLON')">Brouillon</button><button onclick="changeInvoiceStatus('${id}', 'ENVOYEE')">Envoyée</button><button onclick="changeInvoiceStatus('${id}', 'PAYEE')">Payée</button><button onclick="changeInvoiceStatus('${id}', 'RETARD')">En retard</button></div><button class="danger" onclick="deleteInvoice('${id}')">Supprimer</button></div></div>`;
+            const currentStatus = STATUS_TRANSITIONS[status] ? status : 'ATTENTE';
+            const items = [`<button onclick="viewInvoiceByKey('${id}')">Voir le détail</button>`];
+            if (currentStatus === 'BROUILLON') {
+                items.push(`<button onclick="validateInvoice('${id}')">Valider et numéroter</button>`);
+                items.push(`<button onclick="editInvoiceByKey('${id}')">Modifier</button>`);
+            } else {
+                items.push(`<button onclick="downloadInvoicePdf('${id}')">Télécharger le PDF (Factur-X)</button>`);
+            }
+            if (currentStatus !== 'BROUILLON' && currentStatus !== 'PAYEE') {
+                items.push(`<button onclick="createPaymentLink('${id}')">Lien de paiement Stripe</button>`);
+                items.push(`<button onclick="remindInvoice('${id}')">Relancer le client</button>`);
+            }
+            const targets = STATUS_TRANSITIONS[currentStatus] || [];
+            if (targets.length > 0) {
+                const targetButtons = targets.map(target => `<button onclick="changeInvoiceStatus('${id}', '${target}')">${statusLabel(target)}</button>`).join('');
+                items.push(`<button onclick="toggleStatusMenu(event, '${id}')">Changer le statut <span style="float:right">›</span></button><div class="invoice-status-submenu" id="status-${id}">${targetButtons}</div>`);
+            }
+            items.push(`<button class="danger" onclick="deleteInvoice('${id}')">Supprimer</button>`);
+            return `<div class="invoice-actions"><button class="invoice-actions-trigger" aria-label="Actions de la facture" onclick="toggleInvoiceMenu(event, '${id}')">•••</button><div class="invoice-actions-menu" id="actions-${id}">${items.join('')}</div></div>`;
         }
 
         function enhanceLegacyInvoiceRows() {
@@ -2002,7 +2036,7 @@
                 const statusCell = row.cells[6];
                 const currentStatus = row.dataset.status || 'ATTENTE';
                 statusCell.innerHTML = `<span class="badge invoice-status-badge ${statusBadgeClass(currentStatus)}">● ${statusLabel(currentStatus)}</span>`;
-                row.cells[7].innerHTML = invoiceActionsMarkup(key);
+                row.cells[7].innerHTML = invoiceActionsMarkup(key, currentStatus);
             });
         }
 
@@ -2022,7 +2056,7 @@
                 const row = document.createElement('tr');
                 row.dataset.status = invoice.status;
                 row.dataset.invoiceId = invoice.id;
-                row.innerHTML = `<td class="mono font-bold" style="color:var(--purple-700);">${esc(invoice.number)}</td><td><div class="client-meta"><span class="client-name-bold">${esc(invoice.client)}</span><span class="client-sub">Nouvelle facture</span></div></td><td>${esc(invoice.issueDate)}</td><td>${esc(invoice.dueDate || '—')}</td><td class="mono">${esc(invoice.totalHT)}</td><td class="mono font-bold">${esc(invoice.totalTTC)}</td><td><span class="badge invoice-status-badge ${statusBadgeClass(invoice.status)}">● ${esc(statusLabel(invoice.status))}</span></td><td style="text-align:right;">${invoiceActionsMarkup(invoice.id)}</td>`;
+                row.innerHTML = `<td class="mono font-bold" style="color:var(--purple-700);">${esc(invoice.number)}</td><td><div class="client-meta"><span class="client-name-bold">${esc(invoice.client)}</span><span class="client-sub">Nouvelle facture</span></div></td><td>${esc(invoice.issueDate)}</td><td>${esc(invoice.dueDate || '—')}</td><td class="mono">${esc(invoice.totalHT)}</td><td class="mono font-bold">${esc(invoice.totalTTC)}</td><td><span class="badge invoice-status-badge ${statusBadgeClass(invoice.status)}">● ${esc(statusLabel(invoice.status))}</span></td><td style="text-align:right;">${invoiceActionsMarkup(invoice.id, invoice.status)}</td>`;
                 tbody.prepend(row);
             });
         }
@@ -2054,26 +2088,155 @@
             window.location.href = `devis.html?invoice=${invoiceId}&edit=1`;
         }
 
-        async function changeInvoiceStatus(invoiceId, status) {
-            const row = document.querySelector(`[data-invoice-id="${invoiceId}"]`) || document.querySelector(`[data-action-key="${invoiceId}"]`);
-            const endpoint = row?.dataset.invoiceId
-                ? `/api/invoices/${invoiceId}/status`
-                : `/api/invoices/by-number/${encodeURIComponent(row.dataset.invoiceNumber)}/status`;
-            const response = await fetch(endpoint, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-            if (!response.ok) {
-                showToast('Impossible de mettre à jour le statut.');
-                return;
+        /** Convertit une réponse d'erreur API en message affichable. */
+        async function fetchErrorMessage(response, fallback) {
+            try {
+                const body = await response.json();
+                const issues = body?.details?.issues;
+                if (Array.isArray(issues) && issues.length > 0) {
+                    const first = issues.find(issue => issue?.message) || issues[0];
+                    if (first?.message) return String(first.message);
+                }
+                if (typeof body?.error === 'string' && body.error) return body.error;
+            } catch {
+                // Réponse non JSON : on retombe sur le message générique.
             }
+            return fallback;
+        }
+
+        /** Réaffiche les actions d'une ligne selon son statut courant. */
+        function refreshActionsCell(row) {
+            const key = row.dataset.invoiceId || row.dataset.actionKey;
+            const cell = row.cells[row.cells.length - 1];
+            if (key && cell) cell.innerHTML = invoiceActionsMarkup(key, row.dataset.status);
+        }
+
+        /** Applique un statut à une ligne (badge + menu d'actions). */
+        function applyStatusToRow(row, status) {
             row.dataset.status = status;
             const badge = row.querySelector('.invoice-status-badge');
-            badge.className = `badge invoice-status-badge ${statusBadgeClass(status)}`;
-            badge.textContent = `● ${statusLabel(status)}`;
-            document.getElementById(`actions-${invoiceId}`).classList.remove('open');
-            showToast('Statut de la facture mis à jour.');
+            if (badge) {
+                badge.className = `badge invoice-status-badge ${statusBadgeClass(status)}`;
+                badge.textContent = `● ${statusLabel(status)}`;
+            }
+            refreshActionsCell(row);
+        }
+
+        /** Localise la ligne d'une facture par id ou clé d'action. */
+        function findInvoiceRow(key) {
+            return document.querySelector(`[data-invoice-id="${key}"]`) || document.querySelector(`[data-action-key="${key}"]`);
+        }
+
+        async function changeInvoiceStatus(invoiceId, status) {
+            const row = findInvoiceRow(invoiceId);
+            if (!row) return;
+            const previousStatus = row.dataset.status || 'ATTENTE';
+            const endpoint = row.dataset.invoiceId
+                ? `/api/invoices/${encodeURIComponent(invoiceId)}/status`
+                : `/api/invoices/by-number/${encodeURIComponent(row.dataset.invoiceNumber)}/status`;
+
+            // Mise à jour optimiste : l'interface reflète immédiatement la cible,
+            // rollback complet si le serveur refuse (409, 500…).
+            applyStatusToRow(row, status);
+            document.getElementById(`actions-${invoiceId}`)?.classList.remove('open');
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                if (!response.ok) {
+                    applyStatusToRow(row, previousStatus);
+                    showToast(await fetchErrorMessage(response, 'Impossible de mettre à jour le statut.'));
+                    return;
+                }
+                showToast(`Statut mis à jour : ${statusLabel(status)}.`);
+            } catch {
+                applyStatusToRow(row, previousStatus);
+                showToast('Réseau indisponible : le statut n’a pas été modifié.');
+            }
+        }
+
+        /** Valide un brouillon : émission comptable + numéro définitif. */
+        async function validateInvoice(invoiceId) {
+            const row = findInvoiceRow(invoiceId);
+            if (!row) return;
+            const previousStatus = row.dataset.status || 'BROUILLON';
+            document.getElementById(`actions-${invoiceId}`)?.classList.remove('open');
+            applyStatusToRow(row, 'ENVOYEE');
+            showToast('Validation en cours…');
+            try {
+                const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}/validate`, { method: 'POST' });
+                if (!response.ok) {
+                    applyStatusToRow(row, previousStatus);
+                    showToast(await fetchErrorMessage(response, 'Validation impossible.'));
+                    return;
+                }
+                const saved = await response.json();
+                const numberCell = row.cells[0];
+                if (typeof saved?.number === 'string' && saved.number && numberCell) numberCell.textContent = saved.number;
+                showToast(`Facture validée : numéro définitif ${saved?.number || 'attribué'}.`);
+            } catch {
+                applyStatusToRow(row, previousStatus);
+                showToast('Réseau indisponible : la facture n’a pas été validée.');
+            }
+        }
+
+        /** Crée une session Stripe Checkout pour la facture et ouvre le lien. */
+        async function createPaymentLink(invoiceId) {
+            document.getElementById(`actions-${invoiceId}`)?.classList.remove('open');
+            showToast('Création du lien de paiement…');
+            try {
+                const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}/payment-link`, { method: 'POST' });
+                if (!response.ok) {
+                    showToast(await fetchErrorMessage(response, 'Création du lien de paiement impossible.'));
+                    return;
+                }
+                const body = await response.json();
+                if (typeof body?.url === 'string' && body.url) {
+                    window.open(body.url, '_blank', 'noopener');
+                    showToast('Lien de paiement prêt : finalisez le règlement dans l’onglet ouvert.');
+                } else {
+                    showToast('Le serveur n’a pas renvoyé de lien de paiement.');
+                }
+            } catch {
+                showToast('Réseau indisponible : le lien n’a pas pu être créé.');
+            }
+        }
+
+        /** Envoie la relance adaptée au niveau de retard. */
+        async function remindInvoice(invoiceId) {
+            document.getElementById(`actions-${invoiceId}`)?.classList.remove('open');
+            showToast('Envoi de la relance…');
+            try {
+                const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}/remind`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                if (!response.ok) {
+                    showToast(await fetchErrorMessage(response, 'Relance impossible.'));
+                    return;
+                }
+                const body = await response.json();
+                showToast(typeof body?.level === 'string' && body.level
+                    ? `Relance « ${body.level} » envoyée au client.`
+                    : 'Relance envoyée au client.');
+            } catch {
+                showToast('Réseau indisponible : la relance n’a pas été envoyée.');
+            }
+        }
+
+        /** Télécharge le PDF (Factur-X pour une facture émise). */
+        function downloadInvoicePdf(invoiceId) {
+            document.getElementById(`actions-${invoiceId}`)?.classList.remove('open');
+            const link = document.createElement('a');
+            link.href = `/api/invoices/${encodeURIComponent(invoiceId)}/pdf`;
+            link.rel = 'noopener';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast('Téléchargement du PDF lancé.');
         }
 
         function viewInvoiceByKey(key) {
@@ -2097,7 +2260,31 @@
         });
 
         // Modal Handlers
+        /** Date au format des champs <input type="date"> (AAAA-MM-JJ local). */
+        function toInputDate(date) {
+            const pad = value => String(value).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+        }
+
+        /**
+         * Numéro de brouillon proposé : reprise du plus grand ordinal annuel
+         * visible dans le tableau. Le numéro DÉFINITIF reste alloué par le
+         * serveur à la validation (séquence sans trou).
+         */
+        function nextDraftNumber() {
+            const year = new Date().getFullYear();
+            let max = 0;
+            document.querySelectorAll('#invoices-list tbody tr td:first-child').forEach(cell => {
+                const match = new RegExp(`^FAC-${year}-(\\d+)$`).exec(cell.textContent.trim());
+                if (match) max = Math.max(max, Number(match[1]));
+            });
+            return `FAC-${year}-${String(max + 1).padStart(4, '0')}`;
+        }
+
         function openInvoiceModal() {
+            document.getElementById('form-date').value = toInputDate(new Date());
+            document.getElementById('form-due').value = toInputDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+            document.getElementById('form-num').value = nextDraftNumber();
             document.getElementById('invoice-modal').classList.add('open');
             calculateModalTTC();
         }
