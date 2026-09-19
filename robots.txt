@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /dashboard.html
+Disallow: /parametres.html
+Disallow: /api/
+Disallow: /data/
+
+Sitemap: https://izifacture.fr/sitemap.xml
