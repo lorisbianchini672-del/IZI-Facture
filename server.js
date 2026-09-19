@@ -31,6 +31,7 @@ const v = require('./lib/validate');
 const money = require('./lib/money');
 const { withRetry, isRetryableError } = require('./lib/retry');
 const lifecycle = require('./lib/invoice-lifecycle');
+const facturx = require('./lib/facturx');
 const db = require('./db');
 
 const app = express();
@@ -753,6 +754,44 @@ app.patch('/api/invoices/:id', requireAuth, asyncRoute(async (req, res) => {
   const saved = await db.saveInvoice(updated, req.userId);
   req.log.info('Brouillon de facture modifié', { invoiceId });
   res.json(normalizeInvoiceForClient(saved));
+}));
+
+// ---------- Téléchargement PDF (+ Factur-X pour les factures émises) ----------
+app.get('/api/invoices/:id/pdf', requireAuth, asyncRoute(async (req, res) => {
+  const invoiceId = v.validate(invoiceIdSchema, req.params.id, { label: 'Identifiant de facture' });
+  const invoice = await db.getInvoice(invoiceId, req.userId);
+  if (!invoice) throw notFound('Facture introuvable.');
+
+  const userSettings = await db.getSettings(req.userId) || {};
+  const company = { ...defaultSettings, ...userSettings };
+  const pdfBuffer = await createInvoicePdf({ ...invoice, company });
+
+  // Une facture ÉMISE embarque son XML CII EN 16931 (Factur-X PDF/A-3) :
+  // c'est le format exigé par la réforme de la facturation électronique.
+  // Les brouillons et les devis restent des PDF simples.
+  const status = String(invoice.status || 'BROUILLON');
+  const isFacturx = lifecycle.isIssued(status)
+    && (invoice.type || 'FACTURE') === 'FACTURE'
+    && Array.isArray(invoice.items) && invoice.items.length > 0;
+
+  let finalPdf = pdfBuffer;
+  if (isFacturx) {
+    const xml = facturx.buildFacturxXml({
+      number: String(invoice.number),
+      client: String(invoice.client),
+      issueDate: String(invoice.issueDate),
+      dueDate: invoice.dueDate ? String(invoice.dueDate) : '',
+      items: /** @type {Array<{ description?: string, quantity?: number, price?: number, taxRate?: number }>} */ (invoice.items),
+      company
+    });
+    finalPdf = facturx.appendFacturxToPdf(pdfBuffer, xml);
+    req.log.info('PDF Factur-X généré', { invoiceId, number: invoice.number });
+  }
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${String(invoice.number).replace(/[^\w.-]/g, '_')}.pdf"`);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.send(finalPdf);
 }));
 
 // ---------- Paiement Stripe (public) ----------
