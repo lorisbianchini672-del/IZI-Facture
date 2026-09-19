@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connexion — IZI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +13,8 @@
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: linear-gradient(135deg, #faf5ff, #f8fafc 55%, #eef2ff); }
     .auth-shell { width: min(980px, 100%); display: grid; grid-template-columns: 0.9fr 1.1fr; overflow: hidden; background: #fff; border: 1px solid #e9d5ff; border-radius: 24px; box-shadow: 0 24px 70px #4c1d9520; }
     .brand-panel { padding: 48px; color: #fff; background: linear-gradient(145deg, #4c1d95, #7c3aed 65%, #9333ea); }
-    .brand-panel a { color: inherit; text-decoration: none; font: 800 20px 'Plus Jakarta Sans'; }
+    .brand-panel a { display: inline-flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; font: 800 20px 'Plus Jakarta Sans'; }
+    .brand-panel a img { width: 40px; height: 40px; border-radius: 11px; display: block; box-shadow: 0 6px 16px #2e106540; }
     .brand-panel h1 { margin: 90px 0 16px; font: 800 36px/1.1 'Plus Jakarta Sans'; }
     .brand-panel p { max-width: 330px; color: #ede9fe; line-height: 1.7; }
     .form-panel { padding: 42px; }
@@ -29,13 +30,16 @@
     .submit { margin-top: 6px; padding: 13px; border: 0; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #7c3aed, #9333ea); font-weight: 800; cursor: pointer; }
     .message { min-height: 20px; margin: 4px 0 0; color: #b42318; font-size: 13px; }
     .back { display: inline-block; margin-top: 24px; color: var(--purple); font-weight: 700; text-decoration: none; }
+    .auth-mail { margin: 18px 0 0; color: var(--muted); font-size: 13px; }
+    .auth-mail a { color: var(--purple); font-weight: 700; text-decoration: none; }
+    .auth-mail a:hover { text-decoration: underline; }
     @media (max-width: 720px) { .auth-shell { grid-template-columns: 1fr; } .brand-panel { padding: 28px; } .brand-panel h1 { margin-top: 45px; font-size: 30px; } .form-panel { padding: 28px; } }
   </style>
 </head>
 <body>
   <main class="auth-shell">
     <section class="brand-panel">
-      <a href="index.html">IZI</a>
+      <a href="index.html"><img src="logo.svg" alt="IZI Facture" width="40" height="40">IZI</a>
       <h1>Votre espace de facturation, enfin simple.</h1>
       <p>Créez vos factures, suivez vos encaissements et gardez vos documents professionnels au même endroit.</p>
     </section>
@@ -50,6 +54,7 @@
         <p class="message" id="message" role="alert"></p>
       </form>
       <a class="back" href="index.html">Retour au site</a>
+      <p class="auth-mail">Une question ? Écrivez-nous à <a href="mailto:izifacture@gmail.com">izifacture@gmail.com</a></p>
     </section>
   </main>
   <script>

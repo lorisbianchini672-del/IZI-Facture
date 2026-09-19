@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comment ça marche — IZI</title>
     <meta name="description" content="Découvrez le fonctionnement simple et intuitif d'IZI pour les entreprises françaises. Devis, factures Factur-X 2026, calcul de TVA et relances automatiques.">
@@ -256,13 +256,22 @@
         .logo-icon {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
-            border-radius: 50%;
+            background: linear-gradient(135deg, #4C1D95 0%, #7C3AED 52%, #9333EA 100%);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.30);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-icon img,
+        .logo-icon svg {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         .logo-badge {
@@ -738,11 +747,9 @@
     <!-- ====== NAVBAR ====== -->
     <nav class="navbar" id="navbar">
         <div class="container">
-            <a href="index.html" class="navbar-logo">
+            <a href="index.html" class="navbar-logo" aria-label="IZI Facture — accueil">
                 <div class="logo-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 5v14h10"></path>
-                    </svg>
+                    <img src="logo.svg" alt="IZI Facture" width="40" height="40">
                 </div>
                 <span>IZI</span>
             </a>
@@ -1012,13 +1019,16 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <h3>
-                        <div class="logo-icon" style="width:32px; height:32px; border-radius:50%;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14h10"></path></svg>
+                        <div class="logo-icon" style="width:32px; height:32px; border-radius:10px;">
+                            <img src="logo.svg" alt="IZI Facture" width="32" height="32">
                         </div>
                         IZI
                     </h3>
                     <p>
                         La solution moderne de facturation et de gestion pour les indépendants, TPE et PME de toute la France.
+                    </p>
+                    <p style="margin-top:14px;">
+                        <a href="mailto:izifacture@gmail.com" style="color:#D8B4FE;font-weight:600;text-decoration:none;">izifacture@gmail.com</a>
                     </p>
                 </div>
 

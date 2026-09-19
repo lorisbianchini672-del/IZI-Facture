@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Paramètres entreprise — IZI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,7 +10,10 @@
     <style>
         * { box-sizing: border-box; } body { margin: 0; background: #f8fafc; color: #172033; font-family: 'DM Sans', sans-serif; }
         .layout { display: flex; min-height: 100vh; } .sidebar { width: 260px; background: #fff; border-right: 1px solid #e2e8f0; padding: 24px 14px; }
-        .brand { display: block; color: #172033; font: 800 18px 'Plus Jakarta Sans'; padding: 0 8px 25px; text-decoration: none; }
+        .brand { display: inline-flex; align-items: center; gap: 10px; color: #172033; font: 800 18px 'Plus Jakarta Sans'; padding: 0 8px 25px; text-decoration: none; }
+        .brand img { width: 34px; height: 34px; border-radius: 10px; display: block; }
+        .sidebar-mail { display: block; margin: 18px 8px 0; padding-top: 16px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 13px; text-decoration: none; }
+        .sidebar-mail:hover { color: #7c3aed; }
         .nav { display: grid; gap: 5px; } .nav a { padding: 11px 14px; border-radius: 10px; color: #475569; font-weight: 600; text-decoration: none; }
         .nav a:hover, .nav a.active { background: #faf5ff; color: #7c3aed; } main { flex: 1; padding: 42px; max-width: 1000px; }
         h1, h2 { font-family: 'Plus Jakarta Sans'; } h1 { margin: 0 0 8px; } .intro { color: #64748b; margin-bottom: 28px; }
@@ -23,7 +26,7 @@
 </head>
 <body>
 <div class="layout">
-    <aside class="sidebar"><a class="brand" href="index.html">IZI</a><nav class="nav"><a href="dashboard.html">Tableau de bord</a><a href="devis.html">Factures & Devis</a><a href="clients.html">Répertoire Clients</a><a href="transactions-tva.html">Transactions & TVA</a><a href="export-fec.html">Export FEC Expert</a><a class="active" href="parametres.html">Paramètres</a></nav></aside>
+    <aside class="sidebar"><a class="brand" href="index.html"><img src="logo.svg" alt="IZI Facture" width="34" height="34">IZI</a><nav class="nav"><a href="dashboard.html">Tableau de bord</a><a href="devis.html">Factures & Devis</a><a href="clients.html">Répertoire Clients</a><a href="transactions-tva.html">Transactions & TVA</a><a href="export-fec.html">Export FEC Expert</a><a class="active" href="parametres.html">Paramètres</a></nav><a class="sidebar-mail" href="mailto:izifacture@gmail.com">izifacture@gmail.com</a></aside>
     <main><h1>Paramètres entreprise</h1><p class="intro">Ces informations seront automatiquement reprises sur vos prochaines factures.</p><section class="card"><h2>Informations légales et professionnelles</h2><form id="settings-form"><div class="grid"><div class="field"><label for="legalName">Nom légal</label><input id="legalName" required></div><div class="field"><label for="registration">RC / SIRET</label><input id="registration"></div><div class="field"><label for="ninea">NINEA</label><input id="ninea"></div><div class="field"><label for="plater">PLATO</label><input id="plater"></div><div class="field"><label for="billingEmail">Email de factures pro</label><input id="billingEmail" type="email"></div><div class="field"><label for="phone">Téléphone pro</label><input id="phone" type="tel"></div><div class="field full"><label for="billingAddress">Adresse de facturation</label><input id="billingAddress"></div></div><div class="actions"><span id="message"></span><button type="submit">Enregistrer les paramètres</button></div></form></section></main>
 </div>
 <script>

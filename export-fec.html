@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Export FEC & Accès Expert-Comptable — IZI</title>
     <meta name="description" content="Générez et téléchargez votre Fichier des Écritures Comptables (FEC) conforme DGFIP et l'archive des factures Factur-X en 1 clic.">
@@ -103,13 +103,19 @@
         .brand-icon {
             width: 38px;
             height: 38px;
-            background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
-            border-radius: 50%;
+            border-radius: 11px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-icon img {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         .brand-text {
@@ -183,6 +189,22 @@
             padding: 16px;
             border-top: 1px solid var(--gray-100);
             background: var(--gray-50);
+        }
+
+        .sidebar-mail {
+            display: block;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-100);
+            color: var(--purple, #7c3aed);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .sidebar-mail:hover {
+            text-decoration: underline;
         }
 
         .user-card {
@@ -370,7 +392,7 @@
     <aside class="sidebar" id="sidebar">
         <a href="index.html" class="sidebar-brand">
             <div class="brand-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14h10"></path></svg>
+                <img src="logo.svg" alt="IZI Facture" width="38" height="38">
             </div>
             <div>
                 <span class="brand-text">IZI</span>
@@ -415,6 +437,7 @@
                     <div class="user-role">Paris • Plan Pro</div>
                 </div>
             </div>
+            <a class="sidebar-mail" href="mailto:izifacture@gmail.com">izifacture@gmail.com</a>
         </div>
     </aside>
 

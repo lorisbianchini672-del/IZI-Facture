@@ -14,6 +14,18 @@
   ],
   "routes": [
     {
+      "src": "/(data|lib|scripts|supabase|backup|node_modules)/(.*)",
+      "status": 404
+    },
+    {
+      "src": "/\\.(git|vercel|xgrok|github|env)(.*)",
+      "status": 404
+    },
+    {
+      "src": "/(.*)\\.(js|json|md|sql|sh|map|log|tmp)$",
+      "status": 404
+    },
+    {
       "handle": "filesystem"
     },
     {

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 256" width="1080" height="256" role="img" aria-label="IZI Facture">
+  <title>IZI Facture</title>
+  <defs>
+    <linearGradient id="iziTileF" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4C1D95"/>
+      <stop offset="52%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#9333EA"/>
+    </linearGradient>
+    <linearGradient id="iziSheetF" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F3E8FF"/>
+    </linearGradient>
+    <linearGradient id="iziSealF" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icône -->
+  <g transform="translate(16,28) scale(0.39)">
+    <rect width="512" height="512" rx="116" ry="116" fill="url(#iziTileF)"/>
+    <circle cx="256" cy="244" r="188" fill="#FFFFFF" opacity="0.07"/>
+    <path d="M180 104h108l70 70v220c0 11-9 20-20 20H180c-11 0-20-9-20-20V124c0-11 9-20 20-20z"
+          fill="url(#iziSheetF)"/>
+    <path d="M288 104l70 70h-50c-11 0-20-9-20-20v-50z" fill="#C4B5FD"/>
+    <rect x="200" y="206" width="132" height="17" rx="8.5" fill="#DDD6FE"/>
+    <rect x="200" y="245" width="96" height="17" rx="8.5" fill="#E9D5FF"/>
+    <rect x="200" y="284" width="114" height="17" rx="8.5" fill="#E9D5FF"/>
+    <circle cx="374" cy="374" r="72" fill="url(#iziSealF)" stroke="#FFFFFF" stroke-width="14"/>
+    <path d="M340 376l24 24 46-48" fill="none" stroke="#FFFFFF" stroke-width="19"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Nom -->
+  <text x="236" y="146" font-family="'Plus Jakarta Sans','Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="104" font-weight="800" letter-spacing="-2" fill="#4C1D95">IZI</text>
+  <text x="238" y="196" font-family="'Plus Jakarta Sans','Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="30" font-weight="700" letter-spacing="8.5" fill="#7C3AED">FACTURE</text>
+</svg>
