@@ -58,6 +58,14 @@ test('parcours métier complet', async () => {
   assert.ok(registration.status === 200 || registration.status === 201, `inscription: ${registration.status}`);
   assert.ok(cookie, 'un cookie de session doit être émis');
 
+  // 2 bis. Toute inscription démarre sur l'offre gratuite, et le plan est
+  // exposé au front pour qu'il masque les fonctions verrouillées.
+  const me = await api('/api/auth/me');
+  assert.equal(me.status, 200);
+  assert.equal(me.body.authenticated, true);
+  assert.equal(me.body.user.plan, 'gratuit', 'plan par défaut');
+  assert.equal(me.body.plan.isPaid, false);
+
   // 3. Création d'un brouillon.
   const created = await api('/api/invoices', {
     method: 'POST',
@@ -140,9 +148,18 @@ test('parcours métier complet', async () => {
   assert.equal(typeof metrics.body.outstanding?.ht, 'number');
 
 
-  // 11. Relance : envoyée si SMTP configuré, 503 explicite sinon.
+  // 11. Relance : réservée au plan payant. Le compte e2e est gratuit → 403
+  // explicite (PLAN_UPGRADE_REQUIRED), jamais une erreur silencieuse.
   const reminder = await api(`/api/invoices/${invoiceId}/remind`, { method: 'POST', body: JSON.stringify({ email: 'client@acme.fr' }) });
-  assert.ok(reminder.status === 200 || reminder.status === 503, `relance: ${reminder.status}`);
+  assert.ok([200, 403, 503].includes(reminder.status), `relance: ${reminder.status}`);
+  if (reminder.status === 403) {
+    assert.equal(reminder.body.code, 'PLAN_UPGRADE_REQUIRED');
+  }
+
+  // 11 bis. L'aperçu de relance est soumis à la même frontière commerciale.
+  const preview = await api('/api/reminders/preview');
+  assert.ok([200, 403].includes(preview.status), `aperçu relances: ${preview.status}`);
+  if (preview.status === 403) assert.equal(preview.body.code, 'PLAN_UPGRADE_REQUIRED');
 
   // 12. Paiement → PAYEE.
   const paid = await api(`/api/invoices/${invoiceId}/status`, {
@@ -159,4 +176,22 @@ test('parcours métier complet', async () => {
   });
   assert.equal(locked.status, 409);
   assert.equal(locked.body.code, 'INVOICE_FINALIZED');
+
+  // 14. Quota du plan gratuit : le plafond mensuel est réellement appliqué.
+  // Le parcours a déjà consommé une facture ce mois-ci : on complète jusqu'au
+  // plafond, puis la création suivante doit être refusée explicitement.
+  const filler = () => api('/api/invoices', {
+    method: 'POST',
+    body: JSON.stringify({
+      number: 'QUOTA', client: 'Quota SARL', issueDate: '2026-09-01', dueDate: '2026-09-01',
+      items: [{ description: 'Test quota', quantity: 1, price: 100, taxRate: 0.2 }]
+    })
+  });
+  for (let i = 1; i < 5; i++) {
+    const filled = await filler();
+    assert.equal(filled.status, 201, `remplissage du quota n°${i}: ${filled.status}`);
+  }
+  const overflow = await filler();
+  assert.equal(overflow.status, 403, `dépassement du quota: ${overflow.status}`);
+  assert.equal(overflow.body.code, 'INVOICE_QUOTA_REACHED');
 });

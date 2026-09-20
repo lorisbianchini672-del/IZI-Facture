@@ -18,6 +18,7 @@ const {
   badRequest,
   notFound,
   conflict,
+  forbidden,
   tooManyRequests,
   serviceUnavailable,
   databaseError,
@@ -35,6 +36,9 @@ const reminders = require('./lib/reminders');
 const finance = require('./lib/finance');
 const facturx = require('./lib/facturx');
 const payments = require('./lib/invoice-payments');
+// lib/plans.js est la source UNIQUE des offres, prix et quotas : server.js ne
+// redéfinit plus ni catalogue ni plafond.
+const plans = require('./lib/plans');
 const db = require('./db');
 
 const app = express();
@@ -75,11 +79,6 @@ const mailer = smtpConfigured
       auth: { user: env.get('SMTP_USER'), pass: env.get('SMTP_PASSWORD') }
     })
   : null;
-
-const plans = {
-  pro: { name: 'Pro', amount: 990, description: 'Abonnement mensuel Pro' },
-  business: { name: 'Business & Équipe', amount: 2490, description: 'Abonnement mensuel Business & Équipe' }
-};
 
 // ---------- Hash des mots de passe ----------
 const hashPassword = password => new Promise((resolve, reject) => {
@@ -261,7 +260,9 @@ const schemas = {
   invoice: invoiceSchema,
   invoiceStatus: v.object({ status: v.enumeration(INVOICE_STATUSES) }),
   checkout: v.object({
-    plan: v.enumeration(Object.keys(plans)),
+    // Seules les offres payantes sont vendables : « gratuit » n'a pas de
+    // session Stripe, il s'obtient en s'inscrivant.
+    plan: v.enumeration(plans.PAID_PLANS),
     email: v.optional(v.email())
   }),
   invoiceEmail: v.object({
@@ -352,12 +353,52 @@ async function requireAuth(req, res, next) {
     const user = await db.findUserById(session.userId);
     if (!user) return next(unauthorized('Utilisateur introuvable.', 'USER_NOT_FOUND'));
     req.userId = user.id;
-    req.user = { id: user.id, name: user.name, email: user.email };
+    req.user = { id: user.id, name: user.name, email: user.email, plan: plans.normalizePlan(user.plan) };
     next();
   } catch (error) {
     // Le détail (Supabase, disque) reste dans les journaux serveur.
     next(databaseError(error));
   }
+}
+
+/**
+ * Variante non bloquante de requireAuth : la session est exploitée si elle
+ * existe, sinon la requête continue en anonyme. Sert au checkout Stripe, qui
+ * doit rester ouvert aux visiteurs tout en rattachant l'achat au compte
+ * connecté quand il y en a un (activation du plan au retour du webhook).
+ */
+async function optionalAuth(req, res, next) {
+  const token = getSessionToken(req);
+  if (!token) return next();
+  try {
+    const session = await db.findSessionByTokenHash(hashToken(token));
+    if (!session || session.expiresAt < new Date()) return next();
+    const user = await db.findUserById(session.userId);
+    if (!user) return next();
+    req.userId = user.id;
+    req.user = { id: user.id, name: user.name, email: user.email, plan: plans.normalizePlan(user.plan) };
+  } catch (error) {
+    // Une base indisponible ne doit pas empêcher un visiteur d'acheter :
+    // le rattachement se fera par l'email au moment du webhook.
+    logger.warn('Session ignorée au checkout', { requestId: req.id, cause: error });
+  }
+  next();
+}
+
+/**
+ * Réserve une fonction au plan payant (relances, Factur-X…).
+ * `requireAuth` doit être monté AVANT : le plan vient de `req.user`.
+ * @param {keyof typeof plans.PAID_FEATURES} feature
+ */
+function requireFeature(feature) {
+  const label = plans.PAID_FEATURES[feature];
+  return function featureGuard(req, res, next) {
+    if (plans.allows(req.user?.plan, feature)) return next();
+    return next(forbidden(
+      `${label} est réservé aux offres payantes.`,
+      'PLAN_UPGRADE_REQUIRED'
+    ));
+  };
 }
 
 // Journal d'accès : une ligne structurée par requête, corrélable par requestId.
@@ -493,11 +534,13 @@ app.post('/api/stripe/webhook', asyncRoute(async (req, res) => {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
+    const paidPlan = session.metadata?.plan;
+    const customerEmail = session.customer_details?.email || null;
     try {
       await db.saveOrder({
         id: session.id,
-        customerEmail: session.customer_details?.email || null,
-        plan: session.metadata?.plan || 'unknown',
+        customerEmail,
+        plan: paidPlan || 'unknown',
         amount: session.amount_total || 0,
         currency: session.currency || 'eur',
         status: 'paid',
@@ -507,6 +550,31 @@ app.post('/api/stripe/webhook', asyncRoute(async (req, res) => {
       // On accuse réception pour éviter les retries infinis de Stripe,
       // mais l'incident est tracé côté serveur.
       logger.error('Commande payée non enregistrée', { requestId: req.id, cause: orderError });
+    }
+
+    // Activation de l'offre sur le COMPTE : sans cette étape, le client paie
+    // sans rien débloquer (le plan reste « gratuit » à la lecture). Le
+    // rattachement se fait par identifiant quand la session vient d'un
+    // utilisateur connecté, sinon par l'email Stripe.
+    try {
+      const activated = await activatePaidPlan({
+        userId: session.metadata?.userId,
+        customerEmail,
+        plan: paidPlan
+      });
+      if (activated) {
+        logger.info('Offre activée sur le compte', {
+          requestId: req.id, userId: activated.id, plan: activated.plan
+        });
+      } else {
+        logger.warn('Paiement sans compte rattachable', {
+          requestId: req.id, customerEmail, plan: paidPlan
+        });
+      }
+    } catch (planError) {
+      // Idempotence : Stripe rejoue l'événement si l'on répond 5xx, mais une
+      // erreur de persistance ici ne doit pas bloquer la commande déjà tracée.
+      logger.error('Offre payée non activée', { requestId: req.id, cause: planError });
     }
   }
 
@@ -689,7 +757,19 @@ app.get('/api/auth/me', asyncRoute(async (req, res) => {
   if (!session || session.expiresAt < new Date()) return res.json({ authenticated: false });
   const user = await db.findUserById(session.userId);
   if (!user) return res.json({ authenticated: false });
-  res.json({ authenticated: true, user: { id: user.id, name: user.name, email: user.email } });
+  const plan = plans.normalizePlan(user.plan);
+  res.json({
+    authenticated: true,
+    // Le front s'en sert pour afficher l'offre et masquer les fonctions
+    // verrouillées ; la décision d'autorisation reste TOUJOURS côté serveur.
+    user: { id: user.id, name: user.name, email: user.email, plan },
+    plan: {
+      key: plan,
+      name: plans.PLANS[plan].name,
+      isPaid: plans.isPaid(plan),
+      invoiceLimit: plans.invoiceLimit(plan)
+    }
+  });
 }));
 
 app.post('/api/auth/logout', asyncRoute(async (req, res) => {
@@ -741,6 +821,22 @@ app.get('/api/metrics', requireAuth, asyncRoute(async (req, res) => {
 
 app.post('/api/invoices', requireAuth, asyncRoute(async (req, res) => {
   const payload = parseInput('invoice', req.body, 'Facture');
+
+  // Quota du plan gratuit : le plafond est compté sur les documents du mois
+  // civil courant, tous types confondus. Les offres payantes n'ont pas de
+  // limite (invoiceLimit renvoie null) et ne paient donc aucun coût de lecture.
+  if (plans.invoiceLimit(req.user.plan) !== null) {
+    const existing = await db.listInvoices(req.userId);
+    const quota = plans.checkQuota(req.user.plan, existing);
+    if (!quota.allowed) {
+      req.log.info('Quota du plan gratuit atteint', { userId: req.userId, used: quota.used, limit: quota.limit });
+      throw forbidden(
+        `Vous avez atteint la limite de ${quota.limit} documents par mois de l’offre ${plans.PLANS[req.user.plan].name}. `
+        + 'Passez à une offre payante pour continuer sans limite.',
+        'INVOICE_QUOTA_REACHED'
+      );
+    }
+  }
 
   // Les totaux sont RECALCULÉS côté serveur : le client ne fait pas foi en
   // matière comptable. Un écart est journalisé, jamais rejeté en bloc.
@@ -895,7 +991,10 @@ app.get('/api/invoices/:id/pdf', requireAuth, asyncRoute(async (req, res) => {
     && Array.isArray(invoice.items) && invoice.items.length > 0;
 
   let finalPdf = pdfBuffer;
-  if (isFacturx) {
+  // Factur-X est un avantage des offres payantes : le PDF reste téléchargeable
+  // en version simple, mais l'électronisation conforme n'est pas offerte.
+  const canFacturx = plans.allows(req.user.plan, 'facturx');
+  if (isFacturx && canFacturx) {
     const xml = facturx.buildFacturxXml({
       number: String(invoice.number),
       client: String(invoice.client),
@@ -906,6 +1005,12 @@ app.get('/api/invoices/:id/pdf', requireAuth, asyncRoute(async (req, res) => {
     });
     finalPdf = facturx.appendFacturxToPdf(pdfBuffer, xml);
     req.log.info('PDF Factur-X généré', { invoiceId, number: invoice.number });
+  } else if (isFacturx) {
+    // Facture émise sans Factur-X : le client doit pouvoir le constater et
+    // s'orienter vers une offre compatible plutôt que d'envoyer un document
+    // non conforme sans le savoir.
+    req.log.warn('Factur-X omis : offre payante requise', { invoiceId, plan: req.user.plan });
+    res.setHeader('X-IZI-Facturx', 'plan-upgrade-required');
   }
 
   res.setHeader('Content-Type', 'application/pdf');
@@ -915,10 +1020,33 @@ app.get('/api/invoices/:id/pdf', requireAuth, asyncRoute(async (req, res) => {
 }));
 
 // ---------- Paiement Stripe (public) ----------
-app.post('/api/checkout', asyncRoute(async (req, res) => {
+/**
+ * Active une offre payante sur un compte, appelée par le webhook Stripe.
+ * Deux chemins de rattachement, dans cet ordre :
+ *   1. `userId` — posé dans les métadonnées quand l'acheteur était connecté ;
+ *   2. `customerEmail` — email fourni à Stripe (achat depuis le site public).
+ * Une offre gratuite ou inconnue n'est jamais activée : un paiement ne peut
+ * pas rétrograder un compte, et un webhook rejoué réécrit la même valeur.
+ * @param {{ userId?: string, customerEmail?: string | null, plan?: string }} params
+ * @returns {Promise<Record<string, unknown> | null>} compte mis à jour, ou null si introuvable
+ */
+async function activatePaidPlan({ userId, customerEmail, plan }) {
+  if (!plans.isPaid(plan)) return null;
+  const target = userId ? await db.findUserById(userId) : null;
+  const account = target || (customerEmail ? await db.findUserByEmail(customerEmail) : null);
+  if (!account) return null;
+  // Un webhook rejoué ne doit pas rappeler la base pour rien.
+  if (plans.normalizePlan(account.plan) === plans.normalizePlan(plan)) return account;
+  return db.updateUserPlan(account.id, plan);
+}
+
+app.post('/api/checkout', optionalAuth, asyncRoute(async (req, res) => {
   const { plan, email: customerEmail } = parseInput('checkout', req.body, 'Paiement');
   if (!stripe) throw serviceUnavailable('Paiement temporairement indisponible.', 'STRIPE_NOT_CONFIGURED');
-  const selectedPlan = plans[plan];
+  // Le catalogue est indexé par clé technique : « plans[plan] » renverrait
+  // undefined et ferait échouer la session Stripe.
+  const selectedPlan = plans.PLANS[plan];
+  if (!selectedPlan) throw badRequest('Offre inconnue.', 'UNKNOWN_PLAN');
 
   // Clé d'idempotence stable sur toutes les tentatives de cette requête :
   // un rejeu réseau ne peut pas créer deux sessions de paiement.
@@ -938,7 +1066,7 @@ app.post('/api/checkout', asyncRoute(async (req, res) => {
         },
         quantity: 1
       }],
-      metadata: { plan },
+      metadata: { plan, ...(req.user?.id ? { userId: req.user.id } : {}) },
       success_url: `${publicUrl}/dashboard.html?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${publicUrl}/index.html#tarifs`
     }, { idempotencyKey }),
@@ -950,6 +1078,7 @@ app.post('/api/checkout', asyncRoute(async (req, res) => {
     await db.saveOrder({
       id: crypto.randomUUID(),
       checkoutSessionId: session.id,
+      customerEmail: customerEmail || null,
       plan,
       amount: selectedPlan.amount,
       currency: 'eur',
@@ -1053,7 +1182,7 @@ app.post('/api/invoices/email', requireAuth, asyncRoute(async (req, res) => {
 // ---------- Relances automatiques ----------
 // Évaluation des factures relançables (aperçu, sans envoi) : le front
 // affiche les niveaux applicables et les emails clients manquants.
-app.get('/api/reminders/preview', requireAuth, asyncRoute(async (req, res) => {
+app.get('/api/reminders/preview', requireAuth, requireFeature('reminders'), asyncRoute(async (req, res) => {
   const invoices = await db.listInvoices(req.userId);
   res.json(invoices
     .filter(invoice => invoice.status === 'ENVOYEE' || invoice.status === 'RETARD')
@@ -1088,7 +1217,7 @@ const reminderSchema = v.object({
  * le serveur (jamais choisi par le client) et l'envoi est historisé sur la
  * facture pour empêcher les doublons.
  */
-app.post('/api/invoices/:id/remind', requireAuth, asyncRoute(async (req, res) => {
+app.post('/api/invoices/:id/remind', requireAuth, requireFeature('reminders'), asyncRoute(async (req, res) => {
   const invoiceId = v.validate(invoiceIdSchema, req.params.id, { label: 'Identifiant de facture' });
   const { email } = v.validate(reminderSchema, req.body || {}, { label: 'Relance' });
   if (!mailer) throw serviceUnavailable('Envoi d’email non configuré.', 'SMTP_NOT_CONFIGURED');
@@ -1250,6 +1379,10 @@ app.post('/api/reminders/run', requireAdmin, asyncRoute(async (req, res) => {
 // ---------- Administration ----------
 app.get('/api/orders', requireAdmin, asyncRoute(async (req, res) => {
   res.json(await db.listOrders());
+}));
+
+app.get('/api/admin/users', requireAdmin, asyncRoute(async (req, res) => {
+  res.json(await db.listUsers());
 }));
 
 app.get('/api/health', (req, res) => {

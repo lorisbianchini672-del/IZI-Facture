@@ -1,1 +1,41 @@
-<!doctype html><html lang="fr"><head><meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tarifs — IZI</title><link rel="stylesheet" href="page.css"></head><body><main class="page"><a class="brand" href="index.html"><img src="logo.svg" alt="IZI Facture" width="34" height="34">IZI</a><span class="tag">Tarifs transparents</span><h1>Un plan adapté à chaque activité.</h1><div class="pricing"><article><h2>Gratuit</h2><strong>0 €</strong><p>Pour tester la facturation simplement.</p><a class="button" href="auth.html">Commencer</a></article><article class="featured"><h2>Pro</h2><strong>9,90 € <small>/ mois</small></strong><p>Factures illimitées, relances et exports.</p><a class="button" href="index.html#tarifs">Choisir Pro</a></article><article><h2>Business</h2><strong>24,90 € <small>/ mois</small></strong><p>Pour les équipes et les PME.</p><a class="button" href="index.html#tarifs">Choisir Business</a></article></div><p class="mail">Une question sur nos offres ? Écrivez-nous : <a href="mailto:izifacturation@gmail.com">izifacturation@gmail.com</a></p><a class="back" href="index.html">Retour à l'accueil</a></main></body></html>
+<!doctype html><html lang="fr"><head><meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tarifs — IZI</title><meta name="description" content="Offres Gratuit (0 €), Pro (9,90 €/mois) et Business (24,90 €/mois). Facturation illimitée, relances et exports. Sans engagement."><link rel="canonical" href="https://izifacture.fr/tarifs.html"><meta property="og:title" content="Tarifs — IZI"><meta property="og:description" content="Offres Gratuit (0 €), Pro (9,90 €/mois) et Business (24,90 €/mois). Facturation illimitée, relances et exports. Sans engagement."><meta property="og:url" content="https://izifacture.fr/tarifs.html"><meta property="og:type" content="website"><meta property="og:image" content="https://izifacture.fr/og-image.png"><meta property="og:locale" content="fr_FR"><link rel="stylesheet" href="page.css"></head><body><main class="page"><a class="brand" href="index.html"><img src="logo.svg" alt="IZI Facture" width="34" height="34">IZI</a><span class="tag">Tarifs transparents</span><h1>Un plan adapté à chaque activité.</h1><div class="pricing"><article><h2>Gratuit</h2><strong>0 €</strong><p>Pour tester la facturation simplement.</p><a class="button" href="auth.html">Commencer</a></article><article class="featured"><h2>Pro</h2><strong>9,90 € <small>/ mois</small></strong><p>Factures illimitées, relances et exports.</p><button class="button" type="button" data-checkout-plan="pro">Choisir Pro</button></article><article><h2>Business</h2><strong>24,90 € <small>/ mois</small></strong><p>Pour les équipes et les PME.</p><button class="button" type="button" data-checkout-plan="business">Choisir Business</button></article></div><p class="checkout-status" id="status" role="status" aria-live="polite"></p><p class="mail">En souscrivant à une offre payante, vous reconnaissez avoir lu et accepté les <a href="cgv.html">CGV</a> et les <a href="cgu.html">CGU</a>. Service destiné aux professionnels. Données traitées conformément à notre <a href="confidentialite.html">politique de confidentialité</a>.</p><p class="mail">Une question sur nos offres ? Écrivez-nous : <a href="mailto:izifacturation@gmail.com">izifacturation@gmail.com</a></p><footer class="site-footer"><div class="footer-links"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgv.html">CGV</a><a href="cgu.html">CGU</a><a href="contact.html">Contact</a></div><p class="footer-mention">© 2026 IZI — Tous droits réservés.</p></footer><a class="back" href="index.html">Retour à l'accueil</a></main><script>
+// Paiement Stripe depuis la page tarifs.
+// Le bouton porte la clé technique de l'offre (pro, business) : la même clé
+// est validée puis facturée côté serveur (/api/checkout), jamais le libellé.
+document.querySelectorAll('[data-checkout-plan]').forEach(button => {
+    button.addEventListener('click', async () => {
+        const plan = button.dataset.checkoutPlan;
+        const status = document.getElementById('status');
+        const original = button.textContent;
+        status.className = 'checkout-status';
+        status.textContent = 'Ouverture du paiement sécurisé…';
+        button.disabled = true;
+        button.textContent = 'Patiente…';
+        try {
+            const response = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (response.ok && data.url) {
+                window.location.href = data.url;
+                return;
+            }
+            if (response.status === 401) {
+                status.textContent = 'Créez votre compte, puis choisissez cette offre :';
+                const link = document.createElement('a');
+                link.href = 'auth.html';
+                link.textContent = ' créer mon compte';
+                status.appendChild(link);
+            } else {
+                status.textContent = data.error || 'Paiement indisponible pour le moment. Réessayez plus tard.';
+            }
+        } catch {
+            status.textContent = 'Connexion impossible. Vérifiez votre réseau et réessayez.';
+        }
+        button.disabled = false;
+        button.textContent = original;
+    });
+});
+</script></body></html>

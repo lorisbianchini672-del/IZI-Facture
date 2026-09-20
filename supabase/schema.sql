@@ -12,13 +12,20 @@
 create extension if not exists "pgcrypto";
 
 -- Utilisateurs (compte IZI, mot de passe haché côté serveur)
+-- `plan` : offre commerciale du compte (gratuit | pro | business).
+-- Valeur normalisée côté serveur par lib/plans.js ; toute valeur inconnue
+-- est traitée comme le plan gratuit à la lecture.
 create table if not exists public.profiles (
   id uuid primary key,
   email text unique not null,
   name text not null default '',
   password_hash text not null,
+  plan text not null default 'gratuit',
   created_at timestamptz not null default now()
 );
+
+-- Base déjà créée avant l'ajout de la colonne : migration idempotente.
+alter table public.profiles add column if not exists plan text not null default 'gratuit';
 
 -- Sessions de connexion (token haché en SHA-256)
 create table if not exists public.sessions (

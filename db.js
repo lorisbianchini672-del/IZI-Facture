@@ -12,6 +12,7 @@
 // Configuration : lib/env.js charge le .env (chemin absolu) et écarte les
 // valeurs d'exemple. Ce module ne journalise ni ne renvoie jamais de secret.
 const env = require('./lib/env');
+const plans = require('./lib/plans');
 const { databaseError } = require('./lib/errors');
 const fs = require('node:fs/promises');
 const path = require('node:path');
@@ -83,15 +84,46 @@ function backend() {
 }
 
 // ---------- Utilisateurs ----------
+// Le plan est TOUJOURS normalisé à la lecture : une colonne absente (base
+// antérieure à l'ajout de `plan`) ou une valeur inconnue donne le plan
+// gratuit. Un compte ne peut jamais se retrouver sans offre exploitable.
+function withPlan(user) {
+  if (!user) return user;
+  return { ...user, plan: plans.normalizePlan(user.plan) };
+}
+
+// Une base Supabase antérieure à la migration n'a pas encore la colonne
+// `plan`. Sans ce repli, l'inscription renverrait une erreur 500 alors que le
+// reste du site fonctionne : on insère alors SANS le plan (le plan gratuit est
+// appliqué à la lecture par withPlan). Le cas est signalé une seule fois.
+const MISSING_PLAN_COLUMN = /column .*plan.* does not exist|'plan' column/i;
+let planColumnMissingWarned = false;
+
+/** Ajoute `plan` à une charge d'insertion, uniquement si la colonne existe. */
+function withPlanColumn(row, plan) {
+  return planColumnMissingWarned ? row : { ...row, plan };
+}
+
+/**
+ * Signale, une seule fois par processus, qu'une écriture a été faite sans la
+ * colonne `plan` (migration SQL non encore appliquée).
+ */
+function warnMissingPlanColumn(action) {
+  if (planColumnMissingWarned) return;
+  planColumnMissingWarned = true;
+  console.warn(`[izi] Colonne « plan » absente en base (${action}). `
+    + 'Le plan gratuit est appliqué par défaut : appliquez la migration de supabase/schema.sql.');
+}
+
 async function findUserByEmail(email) {
   if (useSupabase) {
     const { data, error } = await supabaseClient
       .from('profiles').select('*').eq('email', email).maybeSingle();
     check(error, 'Recherche utilisateur par email');
-    return data;
+    return withPlan(data);
   }
   const users = await readJson(usersFile, []);
-  return users.find(user => user.email === email);
+  return withPlan(users.find(user => user.email === email));
 }
 
 async function findUserById(id) {
@@ -99,23 +131,33 @@ async function findUserById(id) {
     const { data, error } = await supabaseClient
       .from('profiles').select('*').eq('id', id).maybeSingle();
     check(error, 'Recherche utilisateur par identifiant');
-    return data;
+    return withPlan(data);
   }
   const users = await readJson(usersFile, []);
-  return users.find(user => user.id === id);
+  return withPlan(users.find(user => user.id === id));
 }
 
 async function createUser(user) {
+  // Toute inscription démarre sur le plan gratuit : l'offre payante ne
+  // s'active que par le webhook Stripe (voir updateUserPlan).
+  const plan = plans.normalizePlan(user.plan);
   if (useSupabase) {
-    const { error } = await supabaseClient.from('profiles').insert({
+    const row = {
       id: user.id,
       name: user.name,
       email: user.email,
       password_hash: user.passwordHash,
       created_at: user.createdAt
-    });
+    };
+    let { error } = await supabaseClient.from('profiles').insert(withPlanColumn(row, plan));
+    // Base pas encore migrée : on réessaie sans la colonne `plan` plutôt que
+    // de refuser l'inscription. withPlan appliquera le plan gratuit.
+    if (error && MISSING_PLAN_COLUMN.test(String(error.message || ''))) {
+      warnMissingPlanColumn('inscription');
+      ({ error } = await supabaseClient.from('profiles').insert(row));
+    }
     check(error, 'Création utilisateur');
-    return user;
+    return { ...user, plan };
   }
   const users = await readJson(usersFile, []);
   users.push({
@@ -123,10 +165,42 @@ async function createUser(user) {
     name: user.name,
     email: user.email,
     passwordHash: user.passwordHash,
+    plan,
     createdAt: user.createdAt
   });
   await writeJson(usersFile, users);
-  return user;
+  return { ...user, plan };
+}
+
+/**
+ * Change l'offre d'un utilisateur (activation après paiement, rétrogradation).
+ * Idempotent : rejouer le même webhook réécrit la même valeur sans effet de bord.
+ * Renvoie `null` si le compte n'existe pas (webhook sur email inconnu).
+ * @param {string} userId
+ * @param {unknown} plan
+ * @returns {Promise<Record<string, unknown> | null>}
+ */
+async function updateUserPlan(userId, plan) {
+  const normalized = plans.normalizePlan(plan);
+  if (useSupabase) {
+    const { data, error } = await supabaseClient
+      .from('profiles').update({ plan: normalized }).eq('id', userId).select('*').maybeSingle();
+    // Base pas encore migrée : on ne fait pas échouer le webhook Stripe (la
+    // commande est déjà encaissée). Le compte reste en plan gratuit et le cas
+    // est journalisé pour que la migration soit appliquée.
+    if (error && MISSING_PLAN_COLUMN.test(String(error.message || ''))) {
+      warnMissingPlanColumn('activation d’offre');
+      return withPlan(await findUserById(userId));
+    }
+    check(error, 'Mise à jour du plan utilisateur');
+    return withPlan(data);
+  }
+  const users = await readJson(usersFile, []);
+  const index = users.findIndex(user => user.id === userId);
+  if (index < 0) return null;
+  users[index] = { ...users[index], plan: normalized, planUpdatedAt: new Date().toISOString() };
+  await writeJson(usersFile, users);
+  return withPlan(users[index]);
 }
 
 // ---------- Sessions ----------
@@ -409,6 +483,23 @@ async function saveSettings(userId, settings) {
   return settings;
 }
 
+// ---------- Utilisateurs (admin) ----------
+
+async function listUsers() {
+  if (useSupabase) {
+    const { data, error } = await supabaseClient
+      .from('profiles').select('id, name, email, plan, created_at')
+      .order('created_at', { ascending: false });
+    check(error, 'Liste des utilisateurs');
+    return (data || []).map(user => ({
+      ...user,
+      plan: plans.normalizePlan(user.plan)
+    }));
+  }
+  const users = await readJson(usersFile, []);
+  return users.map(user => withPlan(user));
+}
+
 // ---------- Commandes (admin / Stripe) ----------
 async function listOrders() {
   if (useSupabase) {
@@ -474,6 +565,7 @@ module.exports = {
   findUserByEmail,
   findUserById,
   createUser,
+  updateUserPlan,
   createSession,
   findSessionByTokenHash,
   deleteSessionByTokenHash,
@@ -488,5 +580,6 @@ module.exports = {
   saveSettings,
   listOrders,
   saveOrder,
-  updateOrderStatusBySessionId
+  updateOrderStatusBySessionId,
+  listUsers
 };

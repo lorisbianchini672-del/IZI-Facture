@@ -4,9 +4,7 @@
     <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Paramètres entreprise — IZI</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="fonts.css">
     <style>
         * { box-sizing: border-box; } body { margin: 0; background: #f8fafc; color: #172033; font-family: 'DM Sans', sans-serif; }
         .layout { display: flex; min-height: 100vh; } .sidebar { width: 260px; background: #fff; border-right: 1px solid #e2e8f0; padding: 24px 14px; }
@@ -42,5 +40,5 @@ const fields = ['legalName', 'registration', 'ninea', 'plater', 'billingEmail', 
 fetch('/api/settings').then(response => response.json()).then(settings => fields.forEach(field => { document.getElementById(field).value = settings[field] || ''; }));
 document.getElementById('settings-form').addEventListener('submit', async event => { event.preventDefault(); const values = Object.fromEntries(fields.map(field => [field, document.getElementById(field).value])); const response = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }); document.getElementById('message').textContent = response.ok ? 'Paramètres enregistrés.' : 'Impossible d’enregistrer.'; });
 </script>
-</body>
+<footer class="site-footer" style="max-width:1100px;margin:64px auto 0;padding:0 20px 30px"><div class="footer-links"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgv.html">CGV</a><a href="cgu.html">CGU</a><a href="contact.html">Contact</a></div></footer></body>
 </html>

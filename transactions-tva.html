@@ -4,10 +4,8 @@
     <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transactions & Déclaration TVA — IZI</title>
-    <meta name="description" content="Suivi des transactions, encaissements et calcul de la déclaration de TVA (20%, 10%, 5.5%) pour les sociétés françaises.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Suivi des transactions, encaissements et calcul de la déclaration de TVA (20%, 10%, 5.5%) pour les sociétés françaises."><link rel="canonical" href="https://izifacture.fr/transactions-tva.html"><meta property="og:title" content="Transactions & Déclaration TVA — IZI"><meta property="og:description" content="Suivi des transactions, encaissements et calcul de la déclaration de TVA (20%, 10%, 5.5%) pour les sociétés françaises."><meta property="og:url" content="https://izifacture.fr/transactions-tva.html"><meta property="og:type" content="website"><meta property="og:image" content="https://izifacture.fr/og-image.png"><meta property="og:locale" content="fr_FR">
+    <link rel="stylesheet" href="fonts.css">
     <style>
         *, *::before, *::after {
             margin: 0;
@@ -513,7 +511,7 @@
                 <div class="user-avatar">IF</div>
                 <div>
                     <div class="user-name">Mon Entreprise</div>
-                    <div class="user-role">Paris • Plan Pro</div>
+                    <div class="user-role" id="sidebar-plan">Offre Gratuit</div>
                 </div>
             </div>
             <a class="sidebar-mail" href="mailto:izifacturation@gmail.com">izifacturation@gmail.com</a>
@@ -702,7 +700,22 @@
             clearTimeout(tTimeout);
             tTimeout = setTimeout(() => { t.style.display = 'none'; }, 3500);
         }
+
+        // Offre de l'utilisateur : lue depuis /api/auth/me, jamais codée en dur.
+        // En cas d'échec réseau, le libellé neutre reste affiché (aucune offre
+        // inventée) et la décision d'autorisation reste côté serveur.
+        async function loadSidebarPlan() {
+            const target = document.getElementById('sidebar-plan');
+            if (!target) return;
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                if (!data.authenticated || !data.plan) return;
+                target.textContent = `Offre ${data.plan.name}`;
+            } catch { /* libellé neutre conservé */ }
+        }
+        loadSidebarPlan();
     </script>
-</body>
+<footer class="site-footer" style="max-width:1100px;margin:64px auto 0;padding:0 20px 30px"><div class="footer-links"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgv.html">CGV</a><a href="cgu.html">CGU</a><a href="contact.html">Contact</a></div></footer></body>
 </html>
 

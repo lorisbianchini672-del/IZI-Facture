@@ -1,0 +1,36 @@
+# IZI Facture
+
+> IZI est un logiciel de facturation en ligne (SaaS) pour les professionnels français : création de devis et de factures conformes, calcul automatique de la TVA (20 %, 10 %, 5,5 %, 0 %), conformité Factur-X 2026, export FEC pour l'expert-comptable, envoi par email avec PDF, relances de paiement.
+
+Le service est destiné exclusivement aux professionnels (entreprises, artisans, professions libérales, auto-entrepreneurs). Il est édité en France et hébergé chez Vercel avec une base de données Supabase. Les paiements sont traités par Stripe.
+
+## Pages principales
+
+- [Accueil](https://izifacture.fr/) : présentation du service et accès à l'espace client.
+- [Fonctionnalités](https://izifacture.fr/fonctionnalites.html) : détail des capacités (factures, devis, TVA, relances, exports).
+- [Tarifs](https://izifacture.fr/tarifs.html) : offres Gratuit (0 €), Pro (9,90 €/mois) et Business (24,90 €/mois).
+- [Comment ça marche](https://izifacture.fr/comment-ca-marche.html) : parcours d'utilisation en trois étapes.
+- [Guide Factur-X](https://izifacture.fr/guide-factur-x.html) : explication de la norme de facture électronique 2026.
+- [Modèles de devis](https://izifacture.fr/modeles-devis.html) : exemples de documents générés.
+- [Export FEC](https://izifacture.fr/export-fec.html) : archive comptable FEC pour l'expert-comptable.
+- [Transactions et TVA](https://izifacture.fr/transactions-tva.html) : suivi des encaissements et calcul de déclaration.
+- [Hébergement](https://izifacture.fr/hebergement.html) : information sur l'hébergement et la sécurité.
+- [FAQ](https://izifacture.fr/faq.html) : questions fréquentes.
+- [Contact](https://izifacture.fr/contact.html) : izifacturation@gmail.com.
+
+## Pages légales
+
+- [Mentions légales](https://izifacture.fr/mentions-legales.html)
+- [Politique de confidentialité (RGPD)](https://izifacture.fr/confidentialite.html)
+- [Conditions générales de vente (CGV)](https://izifacture.fr/cgv.html)
+- [Conditions générales d'utilisation (CGU)](https://izifacture.fr/cgu.html)
+
+## Connexion
+
+L'espace client est accessible via [auth.html](https://izifacture.fr/auth.html) (création de compte professionnel et connexion).
+
+## Notes pour les agents IA
+
+- IZI n'utilise aucun cookie publicitaire ni traceur d'analyse.
+- Les données des utilisateurs sont isolées par compte et chiffrées en transit.
+- Site en langue française, destiné au marché français.

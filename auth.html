@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="apple-touch-icon" href="logo.svg"><meta name="theme-color" content="#7C3AED">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion — IZI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Connexion — IZI</title><meta name="description" content="Connectez-vous ou créez votre compte professionnel IZI : devis, factures conformes, TVA automatique et export FEC."><link rel="canonical" href="https://izifacture.fr/auth.html"><meta property="og:title" content="Connexion — Espace client IZI"><meta property="og:description" content="Connectez-vous ou créez votre compte professionnel IZI : devis, factures conformes, TVA automatique et export FEC."><meta property="og:url" content="https://izifacture.fr/auth.html"><meta property="og:type" content="website"><meta property="og:image" content="https://izifacture.fr/og-image.png"><meta property="og:locale" content="fr_FR">
+  <link rel="stylesheet" href="fonts.css">
   <style>
     * { box-sizing: border-box; }
     :root { --purple: #7c3aed; --purple-dark: #4c1d95; --purple-soft: #faf5ff; --ink: #111827; --muted: #64748b; }
@@ -50,10 +48,11 @@
         <label id="name-field" hidden>Nom de l'entreprise ou prénom<input id="name" autocomplete="organization" /></label>
         <label>Email professionnel<input id="email" type="email" autocomplete="email" required /></label>
         <label>Mot de passe<input id="password" type="password" minlength="8" autocomplete="current-password" required /></label>
+        <label id="terms-field" hidden style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5"><input type="checkbox" id="terms" style="width:auto;margin-top:3px" />J'ai lu et j'accepte les <a href="cgu.html" target="_blank" style="color:#c4b5fd">CGU</a> et les <a href="cgv.html" target="_blank" style="color:#c4b5fd">CGV</a>. Les données collectées sont traitées conformément à la <a href="confidentialite.html" target="_blank" style="color:#c4b5fd">politique de confidentialité</a>.</label>
         <button class="submit" id="submit" type="submit">Se connecter</button>
         <p class="message" id="message" role="alert"></p>
       </form>
-      <a class="back" href="index.html">Retour au site</a>
+      <footer class="site-footer"><div class="footer-links"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgv.html">CGV</a><a href="cgu.html">CGU</a><a href="contact.html">Contact</a></div><p class="footer-mention">© 2026 IZI — Tous droits réservés.</p></footer><a class="back" href="index.html">Retour au site</a>
       <p class="auth-mail">Une question ? Écrivez-nous à <a href="mailto:izifacturation@gmail.com">izifacturation@gmail.com</a></p>
     </section>
   </main>
@@ -69,13 +68,20 @@
       document.querySelectorAll('.tab').forEach(item => item.classList.toggle('active', item === tab));
       nameField.hidden = mode !== 'register';
       document.getElementById('name').required = mode === 'register';
+      document.getElementById('terms-field').hidden = mode !== 'register';
+      document.getElementById('terms').required = mode === 'register';
       title.textContent = mode === 'register' ? 'Créer votre compte' : 'Bienvenue';
       intro.textContent = mode === 'register' ? 'Créez votre compte : un email de confirmation vous sera envoyé.' : 'Accédez à votre espace client IZI.';
       submit.textContent = mode === 'register' ? 'Créer mon compte' : 'Se connecter';
       message.textContent = '';
     }));
     document.getElementById('auth-form').addEventListener('submit', async event => {
-      event.preventDefault(); message.textContent = 'Connexion en cours...';
+      event.preventDefault();
+      message.textContent = 'Connexion en cours...';
+      if (mode === 'register' && !document.getElementById('terms').checked) {
+        message.textContent = 'Vous devez accepter les CGU et les CGV pour créer un compte.';
+        return;
+      }
       const payload = { email: document.getElementById('email').value, password: document.getElementById('password').value };
       if (mode === 'register') payload.name = document.getElementById('name').value;
       try {

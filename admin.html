@@ -9,6 +9,7 @@
         body { margin: 0; padding: 32px; }
         main { max-width: 1100px; margin: auto; }
         h1 { margin: 0 0 8px; }
+        h2 { margin: 24px 0 12px; font-size: 18px; }
         p { color: #687386; }
         .toolbar, .card { background: white; border: 1px solid #e2e6ef; border-radius: 14px; padding: 20px; box-shadow: 0 5px 18px #18243d0b; }
         .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 24px 0; }
@@ -29,6 +30,14 @@
         .admin-mail { margin-top: 6px; font-size: 13px; }
         .admin-mail a { color: #7137d8; font-weight: 700; text-decoration: none; }
         .admin-mail a:hover { text-decoration: underline; }
+        .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+        .tab { background: #e2e6ef; border: none; padding: 10px 20px; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; color: #687386; }
+        .tab.active { background: #7137d8; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .user-plan { font-size: 12px; padding: 4px 10px; border-radius: 20px; background: #e2e6ef; color: #687386; }
+        .user-plan.gratuit { background: #dbeafe; color: #1d4ed8; }
+        .user-plan.payant { background: #dcfce7; color: #15803d; }
         @media (max-width: 680px) { body { padding: 18px; } .metrics { grid-template-columns: 1fr; } input { min-width: 0; width: 100%; } }
     </style>
 </head>
@@ -37,27 +46,44 @@
     <header class="admin-head">
         <img src="logo.svg" alt="IZI Facture" width="46" height="46">
         <div>
-            <h1>Commandes & revenus</h1>
-            <p>Vue privée du gérant. Les données proviennent des confirmations Stripe.</p>
+            <h1>Administration</h1>
+            <p>Vue privée du gérant. Les données proviennent de Supabase et Stripe.</p>
             <p class="admin-mail">Contact : <a href="mailto:izifacturation@gmail.com">izifacturation@gmail.com</a></p>
         </div>
     </header>
     <div class="toolbar">
         <input id="token" type="password" placeholder="ADMIN_TOKEN">
-        <button id="load">Charger les commandes</button>
+        <button id="load">Charger les données</button>
         <span id="message"></span>
     </div>
     <section class="metrics">
+        <div class="card metric"><span>Utilisateurs inscrits</span><strong id="users-count">0</strong></div>
         <div class="card metric"><span>Commandes confirmées</span><strong id="orders-count">0</strong></div>
         <div class="card metric"><span>Revenus encaissés</span><strong id="revenue">0,00 €</strong></div>
-        <div class="card metric"><span>En attente</span><strong id="pending">0</strong></div>
     </section>
-    <section class="card table-wrap">
-        <table>
-            <thead><tr><th>Date</th><th>Plan</th><th>Email</th><th>Montant</th><th>Statut</th></tr></thead>
-            <tbody id="orders"><tr><td colspan="5">Aucune donnée chargée.</td></tr></tbody>
-        </table>
-    </section>
+    
+    <div class="tabs">
+        <button class="tab active" data-tab="users">Utilisateurs inscrits</button>
+        <button class="tab" data-tab="orders">Commandes</button>
+    </div>
+    
+    <div id="users-tab" class="tab-content active">
+        <section class="card table-wrap">
+            <table>
+                <thead><tr><th>Date d'inscription</th><th>Nom</th><th>Email</th><th>Plan</th></tr></thead>
+                <tbody id="users"><tr><td colspan="4">Aucune donnée chargée.</td></tr></tbody>
+            </table>
+        </section>
+    </div>
+    
+    <div id="orders-tab" class="tab-content">
+        <section class="card table-wrap">
+            <table>
+                <thead><tr><th>Date</th><th>Plan</th><th>Email</th><th>Montant</th><th>Statut</th></tr></thead>
+                <tbody id="orders"><tr><td colspan="5">Aucune donnée chargée.</td></tr></tbody>
+            </table>
+        </section>
+    </div>
 </main>
 <script>
     // Échappe toute donnée dynamique avant interpolation dans innerHTML (anti-XSS)
@@ -69,21 +95,42 @@
 
     const tokenInput = document.getElementById('token');
     const message = document.getElementById('message');
+    document.querySelectorAll('.tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab + '-tab').classList.add('active');
+        });
+    });
+    function fmtDate(v) { try { return new Date(v).toLocaleDateString('fr-FR'); } catch { return '—'; } }
+    function planBadge(plan) {
+        const p = String(plan || 'gratuit').toLowerCase();
+        const cls = p === 'gratuit' || p === 'free' ? 'gratuit' : 'payant';
+        return '<span class="user-plan ' + cls + '">' + esc(p) + '</span>';
+    }
     document.getElementById('load').addEventListener('click', async () => {
         message.textContent = 'Chargement...';
         message.className = '';
         try {
-            const response = await fetch('/api/orders', { headers: { 'x-admin-token': tokenInput.value } });
-            const orders = await response.json();
-            if (!response.ok) throw new Error(orders.error || 'Accès refusé');
+            const headers = { 'x-admin-token': tokenInput.value };
+            const [usersRes, ordersRes] = await Promise.all([
+                fetch('/api/admin/users', { headers }),
+                fetch('/api/orders', { headers })
+            ]);
+            const users = await usersRes.json();
+            const orders = await ordersRes.json();
+            if (!usersRes.ok) throw new Error(users.error || 'Accès refusé (utilisateurs)');
+            if (!ordersRes.ok) throw new Error(orders.error || 'Accès refusé (commandes)');
+            document.getElementById('users-count').textContent = users.length;
+            document.getElementById('users').innerHTML = users.length ? users.map(u => '<tr><td>' + esc(fmtDate(u.created_at)) + '</td><td>' + esc(u.name || '—') + '</td><td>' + esc(u.email || '—') + '</td><td>' + planBadge(u.plan) + '</td></tr>').join('') : '<tr><td colspan="4">Aucun inscrit.</td></tr>';
             const paid = orders.filter(order => order.status === 'paid');
             document.getElementById('orders-count').textContent = paid.length;
-            document.getElementById('pending').textContent = orders.filter(order => order.status === 'pending').length;
             document.getElementById('revenue').textContent = (paid.reduce((sum, order) => sum + order.amount, 0) / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
-            document.getElementById('orders').innerHTML = orders.length ? orders.map(order => `<tr><td>${esc(new Date(order.paidAt || order.createdAt).toLocaleDateString('fr-FR'))}</td><td>${esc(order.plan)}</td><td>${esc(order.customerEmail || 'En attente')}</td><td>${esc((order.amount / 100).toLocaleString('fr-FR', { style: 'currency', currency: (order.currency || 'eur').toUpperCase() }))}</td><td class="status">${esc(order.status)}</td></tr>`).join('') : '<tr><td colspan="5">Aucune commande.</td></tr>';
+            document.getElementById('orders').innerHTML = orders.length ? orders.map(order => '<tr><td>' + esc(fmtDate(order.paidAt || order.createdAt)) + '</td><td>' + esc(order.plan) + '</td><td>' + esc(order.customerEmail || '— (abandonné)') + '</td><td>' + esc((order.amount / 100).toLocaleString('fr-FR', { style: 'currency', currency: (order.currency || 'eur').toUpperCase() })) + '</td><td class="status">' + esc(order.status) + '</td></tr>').join('') : '<tr><td colspan="5">Aucune commande.</td></tr>';
             message.textContent = 'Données actualisées';
         } catch (error) { message.textContent = error.message; message.className = 'error'; }
     });
 </script>
-</body>
+<footer class="site-footer" style="max-width:1100px;margin:64px auto 0;padding:0 20px 30px"><div class="footer-links"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgv.html">CGV</a><a href="cgu.html">CGU</a><a href="contact.html">Contact</a></div></footer></body>
 </html>
