@@ -7,7 +7,15 @@
       "config": {
         "includeFiles": [
           "*.html",
-          "*.json"
+          "*.json",
+          "*.css",
+          "*.svg",
+          "*.png",
+          "*.ico",
+          "*.txt",
+          "*.xml",
+          "*.webmanifest",
+          "fonts/**"
         ]
       }
     }
